@@ -1,0 +1,5 @@
+# Node.js'e ait dosyaları görmezden gel
+node_modules/
+
+# Ortam değişkeni dosyasını görmezden gel
+.env
