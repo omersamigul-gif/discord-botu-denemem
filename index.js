@@ -56,7 +56,7 @@ const client = new Client({
 });
 
 // 2. ON_READY OLAYI
-client.once('ready', () => { 
+client.once('clientReady', () => {
     console.log('-------------------------------');
     console.log(`Bot olarak giriş yapıldı: ${client.user.tag}`);
     console.log('-------------------------------');
@@ -85,7 +85,7 @@ client.on('messageCreate', async message => {
 
     // 1. KOMUT: !merhaba
     if (command === 'merhaba') {
-        message.channel.send(`Merhaba, **${message.author.username}**!`);
+        message.channel.send(`Merhaba, **${message.author.username}**! Ben med1wsg tarafından yapılmış メッド#4452 botu!`);
     }
 
     // 2. KOMUT: !kimim
