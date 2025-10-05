@@ -267,7 +267,7 @@ else if (command === 'zar') {
 
             // --- İŞLEM KANALINA BİLDİRİM ---
             const deleteEmbed = new EmbedBuilder()
-                .setColor(0x00A388)
+                .setColor(0x371d5d) // Mor
                 .setDescription(`🗑 **${messages.size - 1}** adet mesaj başarıyla silindi.`)
                 .setFooter({ text: `Yetkili: ${message.author.tag}` });
                 
