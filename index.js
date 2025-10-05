@@ -110,7 +110,7 @@ client.on('interactionCreate', async interaction => {
         const channel = await interaction.guild.channels.create({
             name: ticketChannelName,
             type: ChannelType.GuildText,
-            parent: 1420481602387054693, // Ticket kategorisinin ID'sini buraya girin
+            parent: 1420481602387054693, // Ticket kategorisinin ID'si
             permissionOverwrites: [
                 {
                     // Herkesin izinlerini ayarla (kanalı görmesinler)
