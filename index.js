@@ -5,6 +5,11 @@ require('dotenv').config();
 const {
     Client,
     GatewayIntentBits,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ChannelType,
+    PermissionFlagsBits,
     Partials,
     EmbedBuilder,
     PermissionsBitField 
@@ -83,6 +88,96 @@ client.on('messageCreate', async message => {
         }
     };
 
+    // DÜĞME (BUTTON) ETKİLEŞİMLERİNİ YAKALAMA
+client.on('interactionCreate', async interaction => {
+    // Sadece düğme etkileşimlerini dinle
+    if (!interaction.isButton()) return;
+
+    // Düğmenin ID'sine göre işlem yap
+    if (interaction.customId === 'open_ticket') {
+        // Ticket açma düğmesine basıldı
+
+        // Kullanıcıya hemen cevap veriyoruz (bu cevap sadece kullanıcıya görünür)
+        await interaction.deferReply({ ephemeral: true });
+
+        // 1. Ticket Kanalının Adını Belirle
+        const ticketChannelName = `ticket-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+        // Kullanıcının daha önce ticket açıp açmadığını kontrol edebiliriz
+        // Basitlik için bu adımı atlayıp direkt oluşturuyoruz.
+
+        // 2. Kanalı Oluştur
+        const channel = await interaction.guild.channels.create({
+            name: ticketChannelName,
+            type: ChannelType.GuildText,
+            parent: null, // İsteğe bağlı: Ticket kategorisi ID'sini buraya yazabilirsin. Şimdilik kategorisiz kalsın.
+            permissionOverwrites: [
+                {
+                    // Herkesin izinlerini ayarla (kanalı görmesinler)
+                    id: interaction.guild.id,
+                    deny: [PermissionFlagsBits.ViewChannel],
+                },
+                {
+                    // Ticket açan kullanıcının izinlerini ayarla (kanalı görsün)
+                    id: interaction.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+                },
+                {
+                    // Rol ID'si: Destek Ekibi/Moderatör Rolünün ID'sini buraya girin.
+                    // Şimdilik sadece Yönetici (Administrator) iznine sahip olanlar görsün.
+                    id: interaction.guild.roles.cache.find(r => r.permissions.has(PermissionFlagsBits.Administrator)).id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+                },
+            ],
+        });
+
+        // 3. Kullanıcıya Bildirim Gönder
+        await interaction.editReply({
+            content: `Destek talebin açıldı! Lütfen yeni kanalın olan ${channel} adresine git.`,
+            ephemeral: true
+        });
+
+        // 4. Ticket Kanalına Hoş Geldiniz Mesajı ve Kapat Düğmesi Gönder
+
+        // Kapat Düğmesini Oluştur
+        const closeButtonRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('close_ticket') // Kapatma Düğmesinin ID'si
+                    .setLabel('❌ Ticket Kapat')
+                    .setStyle(ButtonStyle.Danger), // Kırmızı renk
+            );
+
+        // Hoş Geldiniz Mesajı
+        await channel.send({
+            content: `Merhaba ${interaction.user}! Hoş geldin. Destek ekibimiz en kısa sürede seninle ilgilenecektir. \n\nTicket'ı kapatmak için aşağıdaki düğmeye tıkla.`,
+            components: [closeButtonRow]
+        });
+
+    } 
+    
+    // Ticket Kapatma Düğmesine Basıldığında
+    else if (interaction.customId === 'close_ticket') {
+        // Sadece kanalın içindeki Kapat düğmesinden gelmelidir.
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({ content: 'Bu bir ticket kanalı değil.', ephemeral: true });
+        }
+
+        // Kullanıcıya cevap ver
+        await interaction.deferReply();
+
+        // Ticket kanalını 5 saniye sonra sil
+        await interaction.channel.send('Ticket 5 saniye içinde kapatılacak ve silinecektir.');
+        
+        // 5 saniye bekle
+        setTimeout(() => {
+            interaction.channel.delete();
+        }, 5000); 
+
+        await interaction.deleteReply();
+    }
+});
+
     // 1. KOMUT: !merhaba
     if (command === 'merhaba') {
         message.channel.send(`Merhaba, **${message.author.username}**! Ben med1wsg tarafından yapılmış メッド#4452 botu!`);
@@ -92,18 +187,43 @@ client.on('messageCreate', async message => {
     else if (command === 'kimim') {
         const joinDate = message.member.joinedAt.toLocaleDateString("tr-TR");
 
-        message.channel.send(
-            `**${message.author.username}** hakkında bilgiler:\n` +
-            `> **Discord ID:** ${message.author.id}\n` +
-            `> **Sunucuya Katılım Tarihi:** ${joinDate}`
-        );
+    message.channel.send(
+        `**${message.author.username}** hakkında bilgiler:\n` +
+        `> **Discord ID:** ${message.author.id}\n` +
+        `> **Sunucuya Katılım Tarihi:** ${joinDate}`
+    );
+}
+
+// Ticket Kurulum Komutu
+else if (command === 'ticket-setup') {
+    // Yöneticilerin (Administrator) bu komutu kullanabilmesi için izin kontrolü
+    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return message.reply("Bu komutu kullanmak için Yönetici (Administrator) iznine sahip olmalısın.");
     }
 
-    // 3. KOMUT: !zar
-    else if (command === 'zar') {
-        const zar = Math.floor(Math.random() * 6) + 1; 
-        message.channel.send(`${message.author.username}, zarın **${zar}** geldi!`);
-    }
+    // 1. Ticket Açma Düğmesini Hazırla
+    const row = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('open_ticket') // Düğmenin benzersiz ID'si
+                .setLabel('📩 Destek Talebi Aç') // Düğme üzerindeki yazı
+                .setStyle(ButtonStyle.Primary), // Mavi renk
+        );
+
+    // 2. Mesajı Gönder
+    await message.channel.send({
+        content: 'Aşağıdaki düğmeye tıklayarak destek talebi (ticket) oluşturabilirsin. Yetkililer kısa süre içinde seninle ilgilenecektir.',
+        components: [row], // Mesaja düğmeyi ekle
+    });
+
+    message.delete(); // Kurulum komutunu silebiliriz
+}
+
+// 3. KOMUT: !zar
+else if (command === 'zar') {
+    const zar = Math.floor(Math.random() * 6) + 1; 
+    message.channel.send(`${message.author.username}, zarın **${zar}** geldi!`);
+}
 
     // 4. KOMUT: !ping 
     else if (command === 'ping') {
