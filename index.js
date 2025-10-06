@@ -409,34 +409,40 @@ client.on('interactionCreate', async interaction => {
         const timestamp = Date.now().toString().slice(-5); // Son 5 haneyi al
         const ticketChannelName = `ticket-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}`;
 
-        // 2. Kanalı Oluştur
-        const channel = await interaction.guild.channels.create({
-            name: ticketChannelName,
-            type: ChannelType.GuildText,
-            parent: null,
-            // Topic'e (konu) kullanıcı ID'sini ekle ki, yukarıdaki kontrolde bulabilelim.
-            topic: `Ticket ID: ${interaction.user.id}`, // YENİ EKLEME
-            permissionOverwrites: [
-                {
-                    // Herkesin izinleri (@everyone) - KESİNLİKLE görmesin
-                    id: interaction.guild.id,
-                    deny: [PermissionFlagsBits.ViewChannel],
-                },
-                {
-                    // Ticket açan kullanıcının izinleri - KESİNLİKLE görsün
-                    id: interaction.user.id,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-                },
-                {
-                    // Destek ekibi rolü (Örn: Moderatörler)
-                    // Yönetici iznine sahip olan tüm rolleri araması yerine, 
-                    // BOTUN KENDİSİNİN (client.user.id) her şeyi görmesini sağlayarak 
-                    // veya belirli bir rol ID'si kullanarak bu hatayı aşabiliriz.
-                    id: client.user.id, // Botun kendisinin her şeyi görmesini sağla
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-                },
-            ],
-        });
+        // ... (client.on('interactionCreate' bloğu içinde)
+
+// 2. Kanalı Oluştur
+const channel = await interaction.guild.channels.create({
+    name: ticketChannelName,
+    type: ChannelType.GuildText,
+    parent: 1420481602387054693n, // Kategori ID'si
+    // Topic'e (konu) kullanıcı ID'sini ekle
+    topic: `Ticket ID: ${interaction.user.id}`, 
+    // BURADAN BAŞLAYAN İZİN AYARLARI EKLENİYOR
+    permissionOverwrites: [
+        {
+            // @everyone: Kanali GÖRMESİN
+            id: interaction.guild.id,
+            deny: [PermissionFlagsBits.ViewChannel],
+        },
+        {
+            // Ticket Açan Kullanıcı: Kanali GÖRSÜN ve Mesaj GÖNDERSİN
+            id: interaction.user.id,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+        },
+        {
+            // Moderatör/Yönetici İzinleri: Kanali GÖRSÜN ve Mesaj GÖNDERSİN
+            // Yönetici iznine sahip ilk rolü bulur ve ona izin verir.
+            // Daha stabil olması için, bu bloğu botun kendisinin görmesi (client.user.id) 
+            // veya belirli bir Moderatör Rol ID'si kullanılması tavsiye edilir. 
+            // Şimdilik Yönetici izni olan ilk rolü bulma yöntemini koruyalım:
+            id: interaction.guild.roles.cache.find(r => r.permissions.has(PermissionFlagsBits.Administrator))?.id || client.user.id,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+        },
+    ],
+    // BURADA BİTİYOR
+});
+
 
         // 3. Kullanıcıya Bildirim Gönder (kalan kodun devamı...)
         await interaction.editReply({
