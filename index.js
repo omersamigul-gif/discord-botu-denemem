@@ -38,7 +38,7 @@ keepAlive();
 // Bu ID'yi kendi log kanalınızın ID'siyle değiştirin.
 const LOG_CHANNEL_ID = "1376137436391804938"; 
 // Ticket kategorisi ID'si
-const TICKET_CATEGORY_ID = "1420481602387054693";
+const TICKET_CATEGORY_ID = "1420481602387054693n";
 
 // Tokeni .env dosyasından güvenli bir şekilde çeker
 const BOT_TOKEN = process.env.DISCORD_TOKEN; 
@@ -417,7 +417,7 @@ client.on('interactionCreate', async interaction => {
 const channel = await interaction.guild.channels.create({
     name: ticketChannelName,
     type: ChannelType.GuildText,
-    parent: 1420481602387054693,
+    parent: 1420481602387054693n,
     topic: `Ticket ID: ${interaction.user.id}`, 
     permissionOverwrites: [
         {
