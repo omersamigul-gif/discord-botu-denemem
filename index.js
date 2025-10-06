@@ -415,13 +415,21 @@ client.on('interactionCreate', async interaction => {
 const channel = await interaction.guild.channels.create({
     name: ticketChannelName,
     type: ChannelType.GuildText,
-    parent: 1420481602387054693n, // Kategori ID'si
-    // Topic'e (konu) kullanıcı ID'sini ekle
+    parent: null,
     topic: `Ticket ID: ${interaction.user.id}`, 
-    // BURADAN BAŞLAYAN İZİN AYARLARI EKLENİYOR
     permissionOverwrites: [
         {
-            // @everyone: Kanali GÖRMESİN
+            // 🎯 BOTUN KENDİSİ: İLK SIRAYA AL ve Tüm İzinleri Ver (En Garanti Yol!)
+            // Botun ID'si: client.user.id
+            id: client.user.id, 
+            allow: [
+                PermissionFlagsBits.ViewChannel, 
+                PermissionFlagsBits.SendMessages, 
+                PermissionFlagsBits.ManageChannels
+            ],
+        },
+        {
+            // @everyone: Kanali GÖRMESİN (Bu izin, botun kendi izninden sonra kontrol edilir)
             id: interaction.guild.id,
             deny: [PermissionFlagsBits.ViewChannel],
         },
@@ -430,17 +438,12 @@ const channel = await interaction.guild.channels.create({
             id: interaction.user.id,
             allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
         },
+        // Moderatör/Yönetici İzinleri (Eğer bu rolün ID'sini biliyorsan buraya ekle)
         {
-            // Moderatör/Yönetici İzinleri: Kanali GÖRSÜN ve Mesaj GÖNDERSİN
-            // Yönetici iznine sahip ilk rolü bulur ve ona izin verir.
-            // Daha stabil olması için, bu bloğu botun kendisinin görmesi (client.user.id) 
-            // veya belirli bir Moderatör Rol ID'si kullanılması tavsiye edilir. 
-            // Şimdilik Yönetici izni olan ilk rolü bulma yöntemini koruyalım:
-            id: interaction.guild.roles.cache.find(r => r.permissions.has(PermissionFlagsBits.Administrator))?.id || client.user.id,
+            id: interaction.guild.roles.cache.find(r => r.permissions.has(PermissionFlagsBits.Administrator))?.id,
             allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
         },
     ],
-    // BURADA BİTİYOR
 });
 
 
