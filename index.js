@@ -77,109 +77,19 @@ client.on('messageCreate', async message => {
     const command = args.shift().toLowerCase();
     
     // --- Yardımcı fonksiyon: Loglama ---
-    const sendLog = async (embed) => {
-        const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
-        if (logChannel) {
-            try {
-                await logChannel.send({ embeds: [embed] });
-            } catch (error) {
-                console.error("Log kanalı hatası:", error);
-            }
+const sendLog = async (embed) => {
+    const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (logChannel) {
+        try {
+            await logChannel.send({ embeds: [embed] });
+        } catch (error) {
+            console.error("Log kanalı hatası:", error);
         }
-    };
-
-    // DÜĞME (BUTTON) ETKİLEŞİMLERİNİ YAKALAMA
-client.on('interactionCreate', async interaction => {
-    // Sadece düğme etkileşimlerini dinle
-    if (!interaction.isButton()) return;
-
-    // Düğmenin ID'sine göre işlem yap
-    if (interaction.customId === 'open_ticket') {
-        // Ticket açma düğmesine basıldı
-
-        // Kullanıcıya hemen cevap veriyoruz (bu cevap sadece kullanıcıya görünür)
-        await interaction.deferReply({ ephemeral: true });
-
-        // 1. Ticket Kanalının Adını Belirle
-        const ticketChannelName = `ticket-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-
-        // Kullanıcının daha önce ticket açıp açmadığını kontrol edebiliriz
-        // Basitlik için bu adımı atlayıp direkt oluşturuyoruz.
-
-        // 2. Kanalı Oluştur
-        const channel = await interaction.guild.channels.create({
-            name: ticketChannelName,
-            type: ChannelType.GuildText,
-            parent: 1420481602387054693n, // Ticket kategorisinin ID'si
-            permissionOverwrites: [
-                {
-                    // Herkesin izinlerini ayarla (kanalı görmesinler)
-                    id: interaction.guild.id,
-                    deny: [PermissionFlagsBits.ViewChannel],
-                },
-                {
-                    // Ticket açan kullanıcının izinlerini ayarla (kanalı görsün)
-                    id: interaction.user.id,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-                },
-                {
-                    // Rol ID'si: Destek Ekibi/Moderatör Rolünün ID'sini buraya girin.
-                    // Şimdilik sadece Yönetici (Administrator) iznine sahip olanlar görsün.
-                    id: interaction.guild.roles.cache.find(r => r.permissions.has(PermissionFlagsBits.Administrator)).id,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-                },
-            ],
-        });
-
-        // 3. Kullanıcıya Bildirim Gönder
-        await interaction.editReply({
-            content: `Destek talebin açıldı! Lütfen yeni kanalın olan ${channel} adresine git.`,
-            ephemeral: true
-        });
-
-        // 4. Ticket Kanalına Hoş Geldiniz Mesajı ve Kapat Düğmesi Gönder
-
-        // Kapat Düğmesini Oluştur
-        const closeButtonRow = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('close_ticket') // Kapatma Düğmesinin ID'si
-                    .setLabel('❌ Ticket Kapat')
-                    .setStyle(ButtonStyle.Danger), // Kırmızı renk
-            );
-
-        // Hoş Geldiniz Mesajı
-        await channel.send({
-            content: `Merhaba ${interaction.user}! Hoş geldin. Destek ekibimiz en kısa sürede seninle ilgilenecektir. \n\nTicket'ı kapatmak için aşağıdaki düğmeye tıkla.`,
-            components: [closeButtonRow]
-        });
-
-    } 
-    
-    // Ticket Kapatma Düğmesine Basıldığında
-    else if (interaction.customId === 'close_ticket') {
-        // Sadece kanalın içindeki Kapat düğmesinden gelmelidir.
-        if (!interaction.channel.name.startsWith('ticket-')) {
-            return interaction.reply({ content: 'Bu bir ticket kanalı değil.', ephemeral: true });
-        }
-
-        // Kullanıcıya cevap ver
-        await interaction.deferReply();
-
-        // Ticket kanalını 5 saniye sonra sil
-        await interaction.channel.send('Ticket 5 saniye içinde kapatılacak ve silinecektir.');
-        
-        // 5 saniye bekle
-        setTimeout(() => {
-            interaction.channel.delete();
-        }, 5000); 
-
-        await interaction.deleteReply();
     }
-});
+};
 
-    // 1. KOMUT: !merhaba
-    if (command === 'merhaba') {
+// 1. KOMUT: !merhaba
+if (command === 'merhaba') {
         message.channel.send(`Merhaba, **${message.author.username}**! Ben med1wsg tarafından yapılmış メッド#4452 botu!`);
     }
 
@@ -426,7 +336,7 @@ else if (command === 'zar') {
                 { name: '`!kimim`', value: 'Kendiniz hakkındaki bilgileri gösterir.', inline: true },
                 { name: '`!zar`', value: '1 ile 6 arasında rastgele zar atar.', inline: true },
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
-                
+
                 // Moderasyon Komutları
                 { name: '\n⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
                 { name: '`!sil [miktar]`', value: 'Mesajları siler (**Mesajları Yönet** yetkisi gerekir).', inline: true },
@@ -466,6 +376,110 @@ else if (command === 'zar') {
                 console.error("Nick Değiştirme Hatası", error);
                 message.channel.send('Takma ad değiştirme işlemi sırasında bir hata oluştu: ' + error.message);
             });
+    }
+});
+
+// Düğme etkileşimlerini dinlemek için event listener
+client.on('interactionCreate', async interaction => {
+    // Sadece düğme etkileşimlerini dinle
+    if (!interaction.isButton()) return;
+
+    // Düğmenin ID'sine göre işlem yap
+    if (interaction.customId === 'open_ticket') {
+        
+        // BU SATIR, KANAL KONTROLÜNDEN ÖNCE GELMELİ! 
+        // Discord'a hemen "İsteği aldım" mesajını gönderir.
+        await interaction.deferReply({ ephemeral: true }); 
+
+        // --- AKTİF TICKET KONTROLÜ BURADAN SONRA GELMELİ ---
+        const activeTicket = interaction.guild.channels.cache.find(c => 
+            c.name.startsWith('ticket-') && c.topic?.includes(interaction.user.id)
+        );
+        
+        if (activeTicket) {
+            // Eğer aktif ticket varsa, cevabı `editReply` ile düzenle.
+            return interaction.editReply({
+                content: `Zaten aktif bir destek talebin bulunuyor: ${activeTicket}. Lütfen önce o ticket'ı kapat.`,
+                ephemeral: true
+            });
+        }
+        
+        // 1. Ticket Kanalının Adını Belirle
+        // Ticket kanal adını benzersiz yapmak için sonuna zaman damgası (timestamp) ekleyelim.
+        const timestamp = Date.now().toString().slice(-5); // Son 5 haneyi al
+        const ticketChannelName = `ticket-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}`;
+
+        // 2. Kanalı Oluştur
+        const channel = await interaction.guild.channels.create({
+            name: ticketChannelName,
+            type: ChannelType.GuildText,
+            parent: null,
+            // Topic'e (konu) kullanıcı ID'sini ekle ki, yukarıdaki kontrolde bulabilelim.
+            topic: `Ticket ID: ${interaction.user.id}`, // YENİ EKLEME
+            permissionOverwrites: [
+                {
+                    // Herkesin izinleri (@everyone) - KESİNLİKLE görmesin
+                    id: interaction.guild.id,
+                    deny: [PermissionFlagsBits.ViewChannel],
+                },
+                {
+                    // Ticket açan kullanıcının izinleri - KESİNLİKLE görsün
+                    id: interaction.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+                },
+                {
+                    // Destek ekibi rolü (Örn: Moderatörler)
+                    // Yönetici iznine sahip olan tüm rolleri araması yerine, 
+                    // BOTUN KENDİSİNİN (client.user.id) her şeyi görmesini sağlayarak 
+                    // veya belirli bir rol ID'si kullanarak bu hatayı aşabiliriz.
+                    id: client.user.id, // Botun kendisinin her şeyi görmesini sağla
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+                },
+            ],
+        });
+
+        // 3. Kullanıcıya Bildirim Gönder (kalan kodun devamı...)
+        await interaction.editReply({
+            content: `Destek talebin açıldı! Lütfen yeni kanalın olan ${channel} adresine git.`,
+            ephemeral: true
+        });
+
+        // Kapat Düğmesini Oluştur ve Hoş Geldiniz Mesajını Gönder (kalan kodun devamı...)
+        const closeButtonRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('close_ticket') 
+                    .setLabel('❌ Ticket Kapat')
+                    .setStyle(ButtonStyle.Danger),
+            );
+
+        // Hoş Geldiniz Mesajı
+        await channel.send({
+            content: `Merhaba ${interaction.user}! Hoş geldin. Destek ekibimiz en kısa sürede seninle ilgilenecektir. \n\nTicket'ı kapatmak için aşağıdaki düğmeye tıkla.`,
+            components: [closeButtonRow]
+        });
+
+    } 
+    
+    // Ticket Kapatma Düğmesine Basıldığında
+    else if (interaction.customId === 'close_ticket') {
+        // Sadece kanalın içindeki Kapat düğmesinden gelmelidir.
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({ content: 'Bu bir ticket kanalı değil.', ephemeral: true });
+        }
+
+        // Kullanıcıya cevap ver
+        await interaction.deferReply();
+
+        // Ticket kanalını 5 saniye sonra sil
+        await interaction.channel.send('Ticket 5 saniye içinde kapatılacak ve silinecektir.');
+        
+        // 5 saniye bekle
+        setTimeout(() => {
+            interaction.channel.delete();
+        }, 5000); 
+
+        await interaction.deleteReply();
     }
 });
 
