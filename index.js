@@ -164,7 +164,7 @@ else if (command === 'zar') {
 
         try {
             await message.delete();
-            const messages = await message.channel.bulkDelete(amount - 1, true);
+            const messages = await message.channel.bulkDelete(amount + 1, true);
 
             // --- LOG KAYDI OLUŞTURMA ---
             const logEmbed = new EmbedBuilder()
@@ -181,7 +181,7 @@ else if (command === 'zar') {
             // --- İŞLEM KANALINA BİLDİRİM ---
             const deleteEmbed = new EmbedBuilder()
                 .setColor(0x371d5d) // Mor
-                .setDescription(`🗑 **${messages.size - 1}** adet mesaj başarıyla silindi.`)
+                .setDescription(`🗑 **${messages.size + 1}** adet mesaj başarıyla silindi.`)
                 .setFooter({ text: `Yetkili: ${message.author.tag}` });
                 
             const sentMessage = await message.channel.send({ embeds: [deleteEmbed] });
