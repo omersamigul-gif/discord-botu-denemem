@@ -379,7 +379,7 @@ else if (command === 'zar') {
             });
     }
 
-    // 11. KOMUT: !role @kullanıcı [Rol Adı]
+    // 11. KOMUT: !rol @kullanıcı [Rol Adı]
     else if (command === 'rol') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
             return message.channel.send('Bu komutu kullanmak için **Rolleri Yönet** yetkisine sahip olmalısın.');
@@ -432,6 +432,58 @@ else if (command === 'zar') {
         return;
     }
 });
+    //  12. KOMUT: !unmute [@kullanıcı]
+    if (command === 'unmute') {
+        if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+            return message.reply('Bu komutu kullanmak için **Üyeleri Denetle** yetkisine sahip olmalısın.');
+        }
+
+        // Argüman kontrolü
+        const targetUser = message.mentions.members.first();
+        if (!targetUser) {
+            return message.reply({ content: 'Kullanım: `!unmute @[kullanıcı adı]`' });
+        }
+
+        // 3. Mute rolünü bul
+        const muteRole = message.guild.roles.cache.find(role => role.name.toLowerCase() === 'muted');
+        if (!muteRole) {
+            return message.reply('Sunucuda "Muted" adlı bir rol bulunamadı.');
+        }
+
+        // Rolü kaldır
+        if (targetUser.isCommunicationDisabled()) {
+            try {
+                await targetUser.timeout(null, 'Moderatör tarafından susturma kaldırıldı.');
+
+                // 5. Başarı Mesajı ve Loglama
+                const embed = new EmbedBuilder()
+                    .setColor(0x371d5d)
+                    .setDescription(`✅ **${targetUser.user.tag}** kullanıcısının susturulması kaldırıldı.`)
+                    .setTimestamp();
+
+                    message.channel.send({ embeds: [embed] });
+
+                    // Loglama
+                    const LogEmbed = new EmbedBuilder()
+                        .setTitle("🔊 SUSTURMA KALDIRILDI (UNMUTE)")
+                        .setColor(0x371d5d)
+                        .addFields(
+                            { name: 'Kullanıcı', value: `${targetUser.user.tag} (${targetUser.id})`, inline: true },
+                            { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: true }
+                        )
+                        .setTimestamp();
+                
+                await sendLog(LogEmbed);
+            } catch (error) {
+            console.error("Susturmayı kaldırma hatası:", error);
+            message.reply({ content: 'Susturmayı kaldırma sırasında bir hata oluştu. İzinleri kontrol edin.' });
+        }
+    } else {
+        message.reply({ content: `${targetUser.user.tag} zaten susturulmamış.` });
+    }
+    return;
+}
+
 
 // Düğme etkileşimlerini dinlemek için event listener
 client.on('interactionCreate', async interaction => {
