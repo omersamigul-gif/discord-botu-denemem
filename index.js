@@ -378,6 +378,59 @@ else if (command === 'zar') {
                 message.channel.send('Takma ad değiştirme işlemi sırasında bir hata oluştu: ' + error.message);
             });
     }
+
+    // 11. KOMUT: !role @kullanıcı [Rol Adı]
+    else if (command === 'rol') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+            return message.channel.send('Bu komutu kullanmak için **Rolleri Yönet** yetkisine sahip olmalısın.');
+        }
+        // Argüman kontrolü
+        const targetMember = message.mentions.members.first();
+        const targetRole = message.mentions.roles.first();
+
+        if (!targetMember || !targetRole) {
+        return message.reply({
+            content: `Kullanım: \`!rol @[kullanıcı adı] @[rol ismi]\``
+        });
+    }   
+        // 2. Botun İzin/Hiyerarşi Kontrolü
+        const botMember = message.guild.members.cache.get(client.user.id);
+        if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+            return message.reply('Bu komutu kullanabilmen için **Rolleri Yönet** iznine sahip olmam gerekiyor.');
+        }
+        // Botun rolünün, verilecek rolden daha yüksek olup olmadığını kontrol et
+        if (targetRole.position >= botMember.roles.highest.position) {
+            return message.reply('Bu rolü veremiyorum çünkü benim en yüksek rolüm bu rolden daha düşük veya aynı seviyede.');
+        }
+        // 3. Rolü Ver
+        try {
+            await targetMember.roles.add(targetRole.id);
+            
+        // 5. Başarı Mesajı ve Loglama
+        const embed = new EmbedBuilder()
+            .setColor(0x371d5d)
+             .setDescription(`✅ **${targetMember.user.tag}** kullanıcısına **${targetRole.name}** rolü verildi.`)
+            .setTimestamp();
+
+        message.channel.send({ embeds: [embed] });
+
+        // Loglama
+        const logEmbed = new EmbedBuilder()
+            .setTitle("✨ ROL VERİLDİ")
+            .setColor(0x371d5d)
+            .addFields(
+                { name: 'Kullanıcı', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
+                { name: 'Rol', value: `${targetRole.name} (${targetRole.id})`, inline: true },
+                { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: false }
+            )
+            .setTimestamp();
+            await sendLog(logEmbed);
+        } catch (error) {
+            console.error("Rol Verme Hatası:", error);
+            message.channel.send('Rol verme işlemi sırasında bir hata oluştu: ' + error.message);
+        }
+        return;
+    }
 });
 
 // Düğme etkileşimlerini dinlemek için event listener
