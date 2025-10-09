@@ -71,7 +71,7 @@ client.once('clientReady', () => {
 // ILK KOMUTLAR VE ONLARIN ORTAK TANIMLARI (PREFİX)
 const prefix = '!';
 
-client.on('messageCreate', async message => { 
+client.on('messageCreate', async message => {
                            
     if (message.author.bot || !message.content.startsWith(prefix)) return;
 
