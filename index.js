@@ -37,8 +37,6 @@ keepAlive();
 // LOG KANALININ ID'sini buraya GİRİN!
 // Bu ID'yi kendi log kanalınızın ID'siyle değiştirin.
 const LOG_CHANNEL_ID = "1376137436391804938"; 
-const LOG_CHANNEL_ID2 = "1274334627686781020"; // İkinci log kanalı ID'si
-
 
 // Tokeni .env dosyasından güvenli bir şekilde çeker
 const BOT_TOKEN = process.env.DISCORD_TOKEN; 
