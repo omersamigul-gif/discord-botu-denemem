@@ -353,9 +353,12 @@ else if (command === 'zar') {
                 { name: '`!sil [miktar]`', value: 'Mesajları siler (**Mesajları Yönet** yetkisi gerekir).', inline: true },
                 { name: '`!mute @kullanıcı [süre]`', value: 'Kullanıcıyı süreli susturur (**Üyeleri Denetle** yetkisi gerekir).', inline: true },
                 { name: '`!kick @kullanıcı [sebep]`', value: 'Kullanıcıyı sunucudan atar (**Üyeleri At** yetkisi gerekir).', inline: true },
+                { name: '`!unmute @kullanıcı`', value: 'Kullanıcının susturmasını kaldırır (**Üyeleri Denetle** yetkisi gerekir).', inline: true },
                 { name: '`!ban @kullanıcı [sebep]`', value: 'Kullanıcıyı kalıcı yasaklar (**Üyeleri Yasakla** yetkisi gerekir).', inline: true },
                 { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Kullanıcının takma adını değiştirir (**Takma Adları Yönet** yetkisi gerekir).', inline: true },
+                { name: '`!rol @kullanıcı [Rol Adı]`', value: 'Kullanıcıya belirtilen rolü verir (**Rolleri Yönet** yetkisi gerekir).', inline: true },
                 { name: '`!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
+                { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
