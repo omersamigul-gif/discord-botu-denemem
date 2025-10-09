@@ -164,7 +164,7 @@ else if (command === 'zar') {
 
         try {
             await message.delete();
-            const messages = await message.channel.bulkDelete(amount + 1, true);
+            const messages = await message.channel.bulkDelete(amount - 1, true);
 
             // --- LOG KAYDI OLUŞTURMA ---
             const logEmbed = new EmbedBuilder()
@@ -173,7 +173,7 @@ else if (command === 'zar') {
                 .addFields(
                     { name: 'Kanal', value: `#${message.channel.name}`, inline: true },
                     { name: 'Yetkili', value: `${message.author.tag}`, inline: true },
-                    { name: 'Miktar', value: `${messages.size - 1} adet`, inline: true }
+                    { name: 'Miktar', value: `${messages.size} adet`, inline: true }
                 )
                 .setTimestamp();
             await sendLog(logEmbed);
@@ -181,7 +181,7 @@ else if (command === 'zar') {
             // --- İŞLEM KANALINA BİLDİRİM ---
             const deleteEmbed = new EmbedBuilder()
                 .setColor(0x371d5d) // Mor
-                .setDescription(`🗑 **${messages.size + 1}** adet mesaj başarıyla silindi.`)
+                .setDescription(`🗑 **${messages.size}** adet mesaj başarıyla silindi.`)
                 .setFooter({ text: `Yetkili: ${message.author.tag}` });
                 
             const sentMessage = await message.channel.send({ embeds: [deleteEmbed] });
@@ -213,6 +213,8 @@ else if (command === 'zar') {
         if (!durationArg) {
             return message.channel.send('Lütfen bir süre belirtin (Örn: 5m, 1h).');
         }
+        // Süre ve kullanıcı etiketinden sonraki tüm argümanları sebep olarak topla
+        const reason = args.slice(2).join(' ') || 'Sebep belirtilmedi.';
 
         // SÜRE HESAPLAMALARI
         const parseDuration = (dur) => {
@@ -241,7 +243,8 @@ else if (command === 'zar') {
                 .addFields(
                     { name: 'Kullanıcı', value: `${targetUser.user.tag} (${targetUser.id})`, inline: false },
                     { name: 'Yetkili', value: `${message.author.tag}`, inline: true },
-                    { name: 'Süre', value: `${durationFormatted}`, inline: true }
+                    { name: 'Süre', value: `${durationFormatted}`, inline: true },
+                    { name: 'Sebep', value: reason, inline: true }
                 )
                 .setTimestamp();
             await sendLog(logEmbed);
