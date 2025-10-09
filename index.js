@@ -432,7 +432,6 @@ else if (command === 'zar') {
         }
         return;
     }
-});
 
 // 12. KOMUT: !unmute @kullanıcı (MUTE ROLÜ KULLANIR)
     if (command === 'unmute') {
@@ -491,6 +490,7 @@ else if (command === 'zar') {
     })();
     return;
 }
+});
 
 
 // Düğme etkileşimlerini dinlemek için event listener
