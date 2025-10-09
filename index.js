@@ -163,7 +163,8 @@ else if (command === 'zar') {
         }
 
         try {
-            const messages = await message.channel.bulkDelete(amount, true); 
+            await message.delete();
+            const messages = await message.channel.bulkDelete(amount - 1, true);
 
             // --- LOG KAYDI OLUŞTURMA ---
             const logEmbed = new EmbedBuilder()
@@ -184,7 +185,12 @@ else if (command === 'zar') {
                 .setFooter({ text: `Yetkili: ${message.author.tag}` });
                 
             const sentMessage = await message.channel.send({ embeds: [deleteEmbed] });
-            setTimeout(() => sentMessage.delete(), 5000);
+            setTimeout(async () => {
+                const fetchedMessage = await message.channel.messages.fetch(sentMessage.id).catch(() => null);
+                if (fetchedMessage) {
+                    await sentMessage.delete();
+                }
+            }, 5000);
 
         } catch (error) {
             console.error(error);
