@@ -72,6 +72,7 @@ client.once('clientReady', () => {
 const prefix = '!';
 
 client.on('messageCreate', async message => { 
+                           
     if (message.author.bot || !message.content.startsWith(prefix)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -432,55 +433,62 @@ else if (command === 'zar') {
         return;
     }
 });
-    //  12. KOMUT: !unmute [@kullanıcı]
-    if (command === 'unmute') {
-        if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return message.reply('Bu komutu kullanmak için **Üyeleri Denetle** yetkisine sahip olmalısın.');
-        }
 
-        // Argüman kontrolü
-        const targetUser = message.mentions.members.first();
-        if (!targetUser) {
+// 12. KOMUT: !unmute @kullanıcı (MUTE ROLÜ KULLANIR)
+    if (command === 'unmute') {
+    // Tüm !unmute mantığını içeren bir async IIFE (Immediately Invoked Function Expression) kullanıyoruz.
+    (async () => {
+        // 1. İzin Kontrolü (Komutu kullanan kişi)
+        if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+            return message.reply({ content: 'Bu komutu kullanmak için **Üyeleri Yönet** iznine sahip olmalısın.' });
+        }
+        
+        // 2. Argüman Kontrolü
+        const targetMember = message.mentions.members.first();
+        if (!targetMember) {
             return message.reply({ content: 'Kullanım: `!unmute @[kullanıcı adı]`' });
         }
 
-        // 3. Mute rolünü bul
-        const muteRole = message.guild.roles.cache.find(role => role.name.toLowerCase() === 'muted');
+        // 3. Mute Rolünü Bul
+        const muteRole = message.guild.roles.cache.find(role => role.name === 'Muted');
+
         if (!muteRole) {
-            return message.reply('Sunucuda "Muted" adlı bir rol bulunamadı.');
+            return message.reply({ content: 'Susturma (Muted) rolü sunucuda bulunamadı.' });
         }
 
-        // Rolü kaldır
-        if (targetUser.isCommunicationDisabled()) {
+        // 4. Rolü Kaldır
+        if (targetMember.roles.cache.has(muteRole.id)) {
             try {
-                await targetUser.timeout(null, 'Moderatör tarafından susturma kaldırıldı.');
+                await targetMember.roles.remove(muteRole.id); // <-- Hata aldığın satır burası!
 
                 // 5. Başarı Mesajı ve Loglama
                 const embed = new EmbedBuilder()
-                    .setColor(0x371d5d)
-                    .setDescription(`✅ **${targetUser.user.tag}** kullanıcısının susturulması kaldırıldı.`)
+                    .setColor(0x371d5d) 
+                    .setDescription(`🔊 **${targetMember.user.tag}** kullanıcısının susturması kaldırıldı.`)
                     .setTimestamp();
-
-                    message.channel.send({ embeds: [embed] });
-
-                    // Loglama
-                    const LogEmbed = new EmbedBuilder()
-                        .setTitle("🔊 SUSTURMA KALDIRILDI (UNMUTE)")
-                        .setColor(0x371d5d)
-                        .addFields(
-                            { name: 'Kullanıcı', value: `${targetUser.user.tag} (${targetUser.id})`, inline: true },
-                            { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: true }
-                        )
-                        .setTimestamp();
                 
-                await sendLog(LogEmbed);
+                message.channel.send({ embeds: [embed] });
+
+                // Loglama
+                const logEmbed = new EmbedBuilder()
+                    .setTitle("🔊 SUSTURMA KALDIRILDI")
+                    .setColor(0x371d5d)
+                    .addFields(
+                        { name: 'Kullanıcı', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
+                        { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: true }
+                    )
+                    .setTimestamp();
+                
+                await sendLog(logEmbed);
+
             } catch (error) {
-            console.error("Susturmayı kaldırma hatası:", error);
-            message.reply({ content: 'Susturmayı kaldırma sırasında bir hata oluştu. İzinleri kontrol edin.' });
+                console.error("Susturmayı kaldırma hatası:", error);
+                message.reply({ content: 'Susturmayı kaldırma sırasında bir hata oluştu. İzinleri kontrol edin.' });
+            }
+        } else {
+            message.reply({ content: `${targetMember.user.tag} zaten susturulmamış.` });
         }
-    } else {
-        message.reply({ content: `${targetUser.user.tag} zaten susturulmamış.` });
-    }
+    })();
     return;
 }
 
