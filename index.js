@@ -24,7 +24,7 @@ const {
     PermissionFlagsBits,
     Partials,
     EmbedBuilder,
-    PermissionsBitField 
+    PermissionsBitField
 } = require('discord.js');
 
 // Botu 7/24 aktif tutmak için Express modülleri
@@ -59,6 +59,8 @@ const GUILD_LOG_CHANNELS = {
 const BOT_TOKEN = process.env.DISCORD_TOKEN; 
 
 // 1. INTENTS VE PARTIALS
+const queue = new Map(); 
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -67,6 +69,7 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers,
     ],
     partials: [Partials.Channel, Partials.GuildMember, Partials.Message, Partials.User],
     
@@ -91,6 +94,10 @@ const prefix = '!';
 client.on('messageCreate', async message => {
                            
     if (message.author.bot || !message.content.startsWith(prefix)) return;
+
+    if (!message.guild) return;
+
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
@@ -520,93 +527,108 @@ else if (command === 'unmute') {
     }
 }
 
-// 13. KOMUT: !çal [arama terimi veya URL] - MÜZİK KOMUTU
+// index.js (~540. satır civarı - !çal komutunun yerine)
+
+// 13. KOMUT: !çal [arama terimi veya URL] - SIRALI MÜZİK KOMUTU
 else if (command === 'çal') {
-    // 1. Kullanıcının Ses Kanalını Kontrol Et
-    const voiceChannel = message.member.voice.channel;
 
-    if (!voiceChannel) {
-        return message.reply('Müzik çalmak için bir ses kanalında olmalısın!');
-    }
+    const serverQueue = queue.get(message.guild.id);
 
-    // Arama terimini al (veya URL)
-    const query = args.join(' ');
-    if (!query) {
-        return message.reply('Lütfen çalmak istediğiniz şarkının adını veya bir URL girin.');
-    }
-    
-    // Geçici olarak botun meşgul olup olmadığını kontrol ediyoruz
-    if (message.guild.me.voice.channel && message.guild.me.voice.channel.id !== voiceChannel.id) {
-        return message.reply('Başka bir ses kanalında meşgulüm.');
-    }
-    
     try {
-        let stream;
-        let title;
-        let replyContent;
-        
-        // 2. Akışı Oluştur (play-dl otomatik olarak URL tipini kontrol eder)
+        // 1. Üye ve Kanal Kontrolü
+        if (!message.member) {
+            message.member = await message.guild.members.fetch(message.author.id).catch(() => null);
+        }
+        if (!message.member || !message.member.voice || !message.member.voice.channel) {
+            return message.reply('Müzik çalmak için bir ses kanalında olmalısın!');
+        }
+        const voiceChannel = message.member.voice.channel;
+
+        const query = args.join(' ');
+        if (!query) {
+            return message.reply('Lütfen çalmak istediğiniz şarkının adını veya bir URL girin.');
+        }
+
+        // --- Şarkıyı Bul ve Tanımla ---
+        let song;
+
         if (play.validate(query) === 'yt_video' || play.validate(query) === 'soundcloud_track') {
-            // Eğer doğrudan geçerli bir URL ise
             const songInfo = await play.video_info(query);
-            stream = await play.stream(query);
-            title = songInfo.video_details.title;
-            replyContent = `▶️ Başarıyla çalmaya başladı: **${title}**`;
-            
+            song = {
+                title: songInfo.video_details.title,
+                url: songInfo.video_details.url,
+                duration: songInfo.video_details.durationInSec,
+                thumbnail: songInfo.video_details.thumbnails[0].url,
+            };
         } else {
-            // Arama yap
             const searchResults = await ytsr(query, { limit: 1 });
-            if (!searchResults || searchResults.items.length === 0 || searchResults.items[0].type !== 'video') {
+            if (!searchResults.items.length || searchResults.items[0].type !== 'video') {
                 return message.reply('Aramanızla eşleşen bir sonuç bulunamadı.');
             }
-            
             const video = searchResults.items[0];
-            stream = await play.stream(video.url);
-            title = video.title;
-            replyContent = `🔎 Aramanızdan çalmaya başladı: **${title}**`;
+            song = {
+                title: video.title,
+                url: video.url,
+                duration: 0, // Süre bilgisi ytsr'da bazen zor olduğu için 0 bırakıyoruz
+                thumbnail: video.thumbnails ? video.thumbnails[0].url : null,
+            };
         }
 
-        // 3. Botu Ses Kanalına Bağla (Eğer daha önce bağlanmamışsa)
-        const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: message.guild.id,
-            adapterCreator: message.guild.voiceAdapterCreator,
-        });
+        // --- SIRA YÖNETİMİ ---
 
-        // 4. Ses Oynatıcısını Oluştur (Müzik botunun tamamı için tek bir oynatıcı kullanacağız)
-        let player = connection.get  ('player'); // Eğer varsa mevcut oynatıcıyı al
-        if (!player) {
-             player = createAudioPlayer();
-             connection.subscribe(player);
+        if (!serverQueue) {
+            // Eğer sunucu için bir sıra yoksa, yenisini oluştur
+            const queueContruct = {
+                textChannel: message.channel,
+                voiceChannel: voiceChannel,
+                connection: null,
+                player: createAudioPlayer(),
+                songs: [],
+                volume: 5,
+                playing: true,
+            };
+
+            queue.set(message.guild.id, queueContruct);
+            queueContruct.songs.push(song);
+
+            try {
+                // Kanala bağlan
+                const connection = joinVoiceChannel({
+                    channelId: voiceChannel.id,
+                    guildId: message.guild.id,
+                    adapterCreator: message.guild.voiceAdapterCreator,
+                });
+                queueContruct.connection = connection;
+                connection.subscribe(queueContruct.player);
+
+                // Oynatıcı olaylarını tanımla (Şarkı bitince sıradakini çal)
+                queueContruct.player.on(AudioPlayerStatus.Idle, () => {
+                    queueContruct.songs.shift(); // Bitmiş şarkıyı sıradan çıkar
+                    module.exports.play(message.guild, queueContruct.songs[0], queue); // Sıradaki şarkıyı çal
+                });
+                
+                queueContruct.player.on('error', error => {
+                    console.error(`Ses Oynatma Hatası: ${error.message}`);
+                    queueContruct.textChannel.send(`Oynatma sırasında bir hata oluştu: ${error.message}`);
+                });
+
+                // Şarkı çalma fonksiyonunu çağır
+                module.exports.play(message.guild, queueContruct.songs[0], queue);
+                
+            } catch (err) {
+                console.error(err);
+                queue.delete(message.guild.id); // Hata olursa sırayı sil
+                return message.channel.send(err);
+            }
+        } else {
+            // Sıra zaten varsa, şarkıyı sıraya ekle
+            serverQueue.songs.push(song);
+            return message.channel.send(`🎵 **${song.title}** sıraya eklendi!`);
         }
-        
-        // 5. Kaynağı Oluştur
-        const resource = createAudioResource(stream.stream, { 
-            inputType: stream.type, 
-            inlineVolume: true 
-        });
-        
-        // Oynatıcıya kaynağı yükle
-        player.play(resource);
 
-        // 6. Durum Bilgisi
-        player.on(AudioPlayerStatus.Idle, () => {
-            // Şarkı bittiğinde kanaldan çıkma (Şimdilik bağlantıyı tutuyoruz)
-            console.log('Şarkı bitti.');
-            // connection.destroy(); // İleride buraya sıradaki şarkı mantığı gelecek
-        });
-
-        player.on('error', error => {
-            console.error(`Ses Oynatma Hatası: ${error.message}`);
-            message.channel.send(`Ses çalarken bir hata oluştu: ${error.message}`);
-            connection.destroy(); // Hata oluşursa kanaldan çık
-        });
-
-        message.reply(replyContent);
-        
     } catch (error) {
-        console.error("Müzik Çalma Hatası:", error);
-        message.channel.send('Müzik çalınırken genel bir hata oluştu: ' + error.message);
+        console.error("MÜZİK BOTU HATA:", error);
+        return message.channel.send(`Müzik çalınırken genel bir hata oluştu: ${error.message}`);
     }
 }
 });
