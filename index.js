@@ -560,29 +560,34 @@ else if (command === 'çal') {
                 duration: songInfo.video_details.durationInSec,
                 thumbnail: songInfo.video_details.thumbnails[0].url,
             };
-        } else {
+// index.js (~580. satır civarı, else bloğu)
+
+} else {
     // Arama yap (yt-search kullanılarak)
     const searchResults = await ytSearch(query);
-    const videos = searchResults.videos.slice(0, 1); // Sadece ilk sonucu al
-
-    if (!videos.length) {
-        connection.destroy();
-        return message.reply('Aramanızla eşleşen bir sonuç bulunamadı.');
+    
+    // Yalnızca video olan sonuçları filtrele
+    const videoResults = searchResults.videos.filter(v => v.type === 'video'); 
+    
+    if (!videoResults.length) {
+        // Arama başarılı ama video sonucu yoksa kanaldan çık
+        serverQueue && serverQueue.connection && serverQueue.connection.destroy();
+        return message.reply('Aramanızla eşleşen bir video bulunamadı.');
     }
 
-    const video = videos[0];
-    // Stream oluşturmak için URL'i kullan
-    stream = await play.stream(video.url);
-
+    const video = videoResults[0]; // İlk video sonucunu al
+    
+    // 🚨 KRİTİK DÜZELTME: URL'yi kesinlikle tam formatında oluştur
+    const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+    
     song = {
         title: video.title,
-        url: video.url,
+        url: videoUrl, // <-- Tam URL'yi kullanıyoruz
         duration: video.duration.seconds,
         thumbnail: video.image,
     };
     replyContent = `🔎 Aramanızdan çalmaya başladı: **${song.title}**`;
 }
-
         // --- SIRA YÖNETİMİ ---
 
         if (!serverQueue) {
@@ -601,20 +606,26 @@ else if (command === 'çal') {
             queueContruct.songs.push(song);
 
             try {
-                // Kanala bağlan
-                const connection = joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: message.guild.id,
-                    adapterCreator: message.guild.voiceAdapterCreator,
-                });
+
+            // Kanala bağlan
+            const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator,
+            // 🚨 KRİTİK: Botun sağır olmasını engelle
+            selfDeaf: false, 
+         });
                 queueContruct.connection = connection;
                 connection.subscribe(queueContruct.player);
+           // Oynatıcı olaylarını tanımla (Şarkı bitince sıradakini çal)
+           queueContruct.player.on(AudioPlayerStatus.Idle, () => {
+           // 🚨 KRİTİK: Bitmiş şarkıyı sıradan çıkar
+           queueContruct.songs.shift(); 
+           // Sıradaki şarkıyı çal (Bu, eğer sıradaki şarkı yoksa play fonksiyonundaki !song kontrolünü tetikleyecektir)
+           module.exports.play(message.guild, queueContruct.songs[0], queue); 
+          });
 
-                // Oynatıcı olaylarını tanımla (Şarkı bitince sıradakini çal)
-                queueContruct.player.on(AudioPlayerStatus.Idle, () => {
-                    queueContruct.songs.shift(); // Bitmiş şarkıyı sıradan çıkar
-                    module.exports.play(message.guild, queueContruct.songs[0], queue); // Sıradaki şarkıyı çal
-                });
+
                 
                 queueContruct.player.on('error', error => {
                     console.error(`Ses Oynatma Hatası: ${error.message}`);
@@ -623,12 +634,14 @@ else if (command === 'çal') {
 
                 // Şarkı çalma fonksiyonunu çağır
                 module.exports.play(message.guild, queueContruct.songs[0], queue);
-                
-            } catch (err) {
-                console.error(err);
-                queue.delete(message.guild.id); // Hata olursa sırayı sil
-                return message.channel.send(err);
-            }
+                } catch (error) {
+                console.error("Oynatma Hatası:", error); // Terminalde hatayı gör
+                serverQueue.textChannel.send(`**${song.title}** çalınırken bir hata oluştu ve atlandı.`);
+        
+        // Hata olursa sıradaki şarkıya geç
+        serverQueue.songs.shift();
+        module.exports.play(guild, serverQueue.songs[0], queue);
+    }
         } else {
             // Sıra zaten varsa, şarkıyı sıraya ekle
             serverQueue.songs.push(song);
@@ -644,20 +657,27 @@ else if (command === 'çal') {
 
 
 
+
 // --- YARDIMCI MÜZİK OYNATMA FONKSİYONU ---
 module.exports.play = async (guild, song, queue) => {
     const serverQueue = queue.get(guild.id);
     
-    // Sıra boşsa kanaldan çık
+    // 🚨 KRİTİK KONTROL 1: Şarkı yoksa (sıra bittiyse) kanaldan ÇIK
     if (!song) {
-        serverQueue.connection.destroy();
-        queue.delete(guild.id);
-        serverQueue.textChannel.send('Sıra bitti, kanaldan ayrılıyorum.');
+        if (serverQueue && serverQueue.connection) {
+            // connection.destroy() sadece connection objesi varsa çağrılmalı
+            // serverQueue.connection.destroy() ile bağlantıyı sonlandır.
+            serverQueue.connection.destroy();
+            queue.delete(guild.id);
+            serverQueue.textChannel.send('Sıra bitti, kanaldan ayrılıyorum.');
+        }
         return;
     }
 
     try {
-        const stream = await play.stream(song.url);
+        const stream = await play.stream(song.url); // Şarkı URL'sinden akış oluştur
+        
+        // Akış başarılıysa oynat
         const resource = createAudioResource(stream.stream, { 
             inputType: stream.type, 
             inlineVolume: true 
@@ -667,10 +687,12 @@ module.exports.play = async (guild, song, queue) => {
         serverQueue.textChannel.send(`🎶 Şimdi çalıyor: **${song.title}**`);
 
     } catch (error) {
+        // Oynatma sırasında herhangi bir hata olursa
         console.error("Oynatma Hatası:", error);
         serverQueue.textChannel.send(`**${song.title}** çalınırken bir hata oluştu ve atlandı.`);
-        // Hata olursa sıradaki şarkıya geç
-        serverQueue.songs.shift();
+        
+        // 🚨 KRİTİK KONTROL 2: Hata verene şarkıyı sıradan çıkar ve sonrakini dene
+        serverQueue.songs.shift(); 
         module.exports.play(guild, serverQueue.songs[0], queue);
     }
 };
