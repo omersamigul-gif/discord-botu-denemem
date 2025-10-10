@@ -85,7 +85,18 @@ client.on('messageCreate', async message => {
     
     // --- Yardımcı fonksiyon: Loglama ---
 const sendLog = async (embed) => {
-    const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
+    // Mesajın geldiği sunucunun (Guild) ID'sini kullanarak Log Kanalı ID'sini haritadan çek.
+    const logChannelId = GUILD_LOG_CHANNELS[message.guild.id]; 
+    
+    // Eğer o sunucu için bir log kanalı tanımlanmamışsa, loglama yapma.
+    if (!logChannelId) {
+        console.error(`Hata: Sunucu ID ${message.guild.id} için Log Kanalı ID'si tanımlanmamış.`);
+        return; 
+    }
+    
+    // Log Kanalı ID'sini kullanarak kanalı bul.
+    const logChannel = message.guild.channels.cache.get(logChannelId);
+    
     if (logChannel) {
         try {
             await logChannel.send({ embeds: [embed] });
