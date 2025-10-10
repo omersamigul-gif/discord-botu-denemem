@@ -527,7 +527,7 @@ else if (command === 'unmute') {
     }
 }
 
-// index.js (~540. satır civarı - !çal komutunun yerine)
+
 
 // 13. KOMUT: !çal [arama terimi veya URL] - SIRALI MÜZİK KOMUTU
 else if (command === 'çal') {
@@ -633,6 +633,38 @@ else if (command === 'çal') {
 }
 });
 
+
+
+// --- YARDIMCI MÜZİK OYNATMA FONKSİYONU ---
+module.exports.play = async (guild, song, queue) => {
+    const serverQueue = queue.get(guild.id);
+    
+    // Sıra boşsa kanaldan çık
+    if (!song) {
+        serverQueue.connection.destroy();
+        queue.delete(guild.id);
+        serverQueue.textChannel.send('Sıra bitti, kanaldan ayrılıyorum.');
+        return;
+    }
+
+    try {
+        const stream = await play.stream(song.url);
+        const resource = createAudioResource(stream.stream, { 
+            inputType: stream.type, 
+            inlineVolume: true 
+        });
+
+        serverQueue.player.play(resource);
+        serverQueue.textChannel.send(`🎶 Şimdi çalıyor: **${song.title}**`);
+
+    } catch (error) {
+        console.error("Oynatma Hatası:", error);
+        serverQueue.textChannel.send(`**${song.title}** çalınırken bir hata oluştu ve atlandı.`);
+        // Hata olursa sıradaki şarkıya geç
+        serverQueue.songs.shift();
+        module.exports.play(guild, serverQueue.songs[0], queue);
+    }
+};
 
 // Düğme etkileşimlerini dinlemek için event listener
 client.on('interactionCreate', async interaction => {
