@@ -1,6 +1,18 @@
 // Gerekli ortam değişkeni dosyasını yükle (.env)
 require('dotenv').config(); 
 
+// Müzik botu için:
+const {
+    joinVoiceChannel,
+    createAudioPlayer,
+    createAudioResource,
+    StreamType,
+    AudioPlayerStatus,
+} = require('@discordjs/voice');
+
+const play = require('play-dl'); // YouTube ve SoundCloud
+const ytsr = require('ytsr'); // YouTube arama  
+
 // Gerekli Discord modüllerini içeri aktar
 const {
     Client,
@@ -505,6 +517,96 @@ else if (command === 'unmute') {
         }
     } else {
         message.channel.send(`${targetMember.user.tag} zaten susturulmamış.`);
+    }
+}
+
+// 13. KOMUT: !çal [arama terimi veya URL] - MÜZİK KOMUTU
+else if (command === 'çal') {
+    // 1. Kullanıcının Ses Kanalını Kontrol Et
+    const voiceChannel = message.member.voice.channel;
+
+    if (!voiceChannel) {
+        return message.reply('Müzik çalmak için bir ses kanalında olmalısın!');
+    }
+
+    // Arama terimini al (veya URL)
+    const query = args.join(' ');
+    if (!query) {
+        return message.reply('Lütfen çalmak istediğiniz şarkının adını veya bir URL girin.');
+    }
+    
+    // Geçici olarak botun meşgul olup olmadığını kontrol ediyoruz
+    if (message.guild.me.voice.channel && message.guild.me.voice.channel.id !== voiceChannel.id) {
+        return message.reply('Başka bir ses kanalında meşgulüm.');
+    }
+    
+    try {
+        let stream;
+        let title;
+        let replyContent;
+        
+        // 2. Akışı Oluştur (play-dl otomatik olarak URL tipini kontrol eder)
+        if (play.validate(query) === 'yt_video' || play.validate(query) === 'soundcloud_track') {
+            // Eğer doğrudan geçerli bir URL ise
+            const songInfo = await play.video_info(query);
+            stream = await play.stream(query);
+            title = songInfo.video_details.title;
+            replyContent = `▶️ Başarıyla çalmaya başladı: **${title}**`;
+            
+        } else {
+            // Arama yap
+            const searchResults = await ytsr(query, { limit: 1 });
+            if (!searchResults || searchResults.items.length === 0 || searchResults.items[0].type !== 'video') {
+                return message.reply('Aramanızla eşleşen bir sonuç bulunamadı.');
+            }
+            
+            const video = searchResults.items[0];
+            stream = await play.stream(video.url);
+            title = video.title;
+            replyContent = `🔎 Aramanızdan çalmaya başladı: **${title}**`;
+        }
+
+        // 3. Botu Ses Kanalına Bağla (Eğer daha önce bağlanmamışsa)
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator,
+        });
+
+        // 4. Ses Oynatıcısını Oluştur (Müzik botunun tamamı için tek bir oynatıcı kullanacağız)
+        let player = connection.get  ('player'); // Eğer varsa mevcut oynatıcıyı al
+        if (!player) {
+             player = createAudioPlayer();
+             connection.subscribe(player);
+        }
+        
+        // 5. Kaynağı Oluştur
+        const resource = createAudioResource(stream.stream, { 
+            inputType: stream.type, 
+            inlineVolume: true 
+        });
+        
+        // Oynatıcıya kaynağı yükle
+        player.play(resource);
+
+        // 6. Durum Bilgisi
+        player.on(AudioPlayerStatus.Idle, () => {
+            // Şarkı bittiğinde kanaldan çıkma (Şimdilik bağlantıyı tutuyoruz)
+            console.log('Şarkı bitti.');
+            // connection.destroy(); // İleride buraya sıradaki şarkı mantığı gelecek
+        });
+
+        player.on('error', error => {
+            console.error(`Ses Oynatma Hatası: ${error.message}`);
+            message.channel.send(`Ses çalarken bir hata oluştu: ${error.message}`);
+            connection.destroy(); // Hata oluşursa kanaldan çık
+        });
+
+        message.reply(replyContent);
+        
+    } catch (error) {
+        console.error("Müzik Çalma Hatası:", error);
+        message.channel.send('Müzik çalınırken genel bir hata oluştu: ' + error.message);
     }
 }
 });
