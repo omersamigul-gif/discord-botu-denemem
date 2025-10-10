@@ -11,7 +11,7 @@ const {
 } = require('@discordjs/voice');
 
 const play = require('play-dl'); // YouTube ve SoundCloud
-const ytsr = require('ytsr'); // YouTube arama  
+const ytSearch = require('yt-search'); // YouTube arama 
 
 // Gerekli Discord modüllerini içeri aktar
 const {
@@ -561,18 +561,27 @@ else if (command === 'çal') {
                 thumbnail: songInfo.video_details.thumbnails[0].url,
             };
         } else {
-            const searchResults = await ytsr(query, { limit: 1 });
-            if (!searchResults.items.length || searchResults.items[0].type !== 'video') {
-                return message.reply('Aramanızla eşleşen bir sonuç bulunamadı.');
-            }
-            const video = searchResults.items[0];
-            song = {
-                title: video.title,
-                url: video.url,
-                duration: 0, // Süre bilgisi ytsr'da bazen zor olduğu için 0 bırakıyoruz
-                thumbnail: video.thumbnails ? video.thumbnails[0].url : null,
-            };
-        }
+    // Arama yap (yt-search kullanılarak)
+    const searchResults = await ytSearch(query);
+    const videos = searchResults.videos.slice(0, 1); // Sadece ilk sonucu al
+
+    if (!videos.length) {
+        connection.destroy();
+        return message.reply('Aramanızla eşleşen bir sonuç bulunamadı.');
+    }
+
+    const video = videos[0];
+    // Stream oluşturmak için URL'i kullan
+    stream = await play.stream(video.url);
+
+    song = {
+        title: video.title,
+        url: video.url,
+        duration: video.duration.seconds,
+        thumbnail: video.image,
+    };
+    replyContent = `🔎 Aramanızdan çalmaya başladı: **${song.title}**`;
+}
 
         // --- SIRA YÖNETİMİ ---
 
