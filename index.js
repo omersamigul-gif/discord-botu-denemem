@@ -522,6 +522,11 @@ if (command === 'sunucu') {
         
         // Sunucu nesnesini güvenle al (Çünkü yukarıda kontrol ettik)
         const guild = message.guild;
+        // Sadece görünen kanallar
+     const visibleChannels = guild.channels.cache.filter(c => 
+        c.type === ChannelType.GuildText || 
+        c.type === ChannelType.GuildVoice
+    );
 
         // EmbedBuilder import edildiğinden emin olun!
         const serverEmbed = new EmbedBuilder()
@@ -531,7 +536,7 @@ if (command === 'sunucu') {
             .addFields(
                 { name: 'Kurucu', value: `<@${guild.ownerId}>`, inline: true }, 
                 { name: 'Üye Sayısı', value: `${guild.memberCount}`, inline: true }, 
-                { name: 'Kanal Sayısı', value: `${guild.channels.cache.size}`, inline: true }, 
+                { name: 'Kanal Sayısı', value: `${visibleChannels.size}`, inline: true }, 
                 { name: 'Oluşturulma Tarihi', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:f>`, inline: false }, 
                 { name: 'Sunucu ID', value: `${guild.id}`, inline: false } 
             )
