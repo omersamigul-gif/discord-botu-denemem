@@ -82,6 +82,8 @@ const prefix = '!';
 
 client.on('messageCreate', async message => {
                            
+    if (message.author.bot || !message.guild) return;
+
     if (message.author.bot || !message.content.startsWith(prefix)) return;
 
     if (!message.guild) return;
@@ -524,7 +526,6 @@ else if (command === 'sunucu') {
     .setThumbnail(guild.iconURL({ dynamic: true }))
     .addFields(
         { name: 'Kurucu', value: `<@${guild.ownerId}>`, inline: true },
-        
         { name: 'Oluşturulma Tarihi', value: guild.createdAt.toLocaleDateString('tr-TR'), inline: true },
         { name: 'Üye Sayısı', value: `${guild.memberCount}`, inline: true },
         { name: 'Kanal Sayısı', value: `${guild.channels.cache.size}`, inline: true },
