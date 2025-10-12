@@ -1,17 +1,6 @@
 // Gerekli ortam değişkeni dosyasını yükle (.env)
 require('dotenv').config(); 
 
-// Müzik botu için:
-const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    AudioPlayerStatus,
-} = require('@discordjs/voice');
-
-const play = require('play-dl'); // YouTube ve SoundCloud
-const ytSearch = require('yt-search');
-
 // Gerekli Discord modüllerini içeri aktar
 const {
     Client,
@@ -23,8 +12,7 @@ const {
     PermissionFlagsBits,
     Partials,
     EmbedBuilder,
-    PermissionsBitField,
-    StreamType
+    PermissionsBitField
 } = require('discord.js');
 
 // Botu 7/24 aktif tutmak için Express modülleri
@@ -87,6 +75,7 @@ client.once('clientReady', () => {
     console.log(`Bot olarak giriş yapıldı: ${client.user.tag}`);
     console.log('-------------------------------');
 });
+
 
 // ILK KOMUTLAR VE ONLARIN ORTAK TANIMLARI (PREFİX)
 const prefix = '!';
@@ -526,164 +515,28 @@ else if (command === 'unmute') {
         message.channel.send(`${targetMember.user.tag} zaten susturulmamış.`);
     }
 }
-
-
-// 13. KOMUT: !çal [şarkı adı veya URL]
-    else if (command === 'çal') {
-    // Şarkı değişkeni, URL/Arama mantığından önce tanımlanmalıdır.
-    let song;
-
-    try {
-        const serverQueue = queue.get(message.guild.id);
-
-        // 1. Üye ve Kanal Kontrolü
-        if (!message.member) {
-            message.member = await message.guild.members.fetch(message.author.id).catch(() => null);
-        }
-        if (!message.member || !message.member.voice || !message.member.voice.channel) {
-            return message.reply('Müzik çalmak için bir ses kanalında olmalısın!');
-        }
-        const voiceChannel = message.member.voice.channel;
-
-        const query = args.join(' ');
-        if (!query) {
-            return message.reply('Lütfen çalmak istediğiniz şarkının adını veya bir URL girin.');
-        }
-
-        // --- Şarkıyı Bul ve Tanımla ---
-        if (play.validate(query) === 'yt_video' || play.validate(query) === 'soundcloud_track') {
-            const songInfo = await play.video_info(query);
-            song = {
-                title: songInfo.video_details.title,
-                url: songInfo.video_details.url,
-                duration: songInfo.video_details.durationInSec,
-                thumbnail: songInfo.video_details.thumbnails[0].url,
-            };
-        } else {
-            // Arama yapılıyorsa
-            const searchResults = await ytSearch(query);
-            const videoResults = searchResults.videos.filter(v => v.type === 'video'); 
-            
-            if (!videoResults.length) {
-                return message.reply('Aramanızla eşleşen bir video bulunamadı.');
-            }
-
-            const video = videoResults[0]; 
-            const videoUrl = video.url || `https://www.youtube.com/watch?v=${video.videoId}`;
-            
-            song = {
-                title: video.title,
-                url: videoUrl, 
-                duration: video.duration.seconds,
-                thumbnail: video.image,
-            };
-        }
+// 13. KOMUT: !sunucu (Temel Sunucu Bilgileri)
+else if (command === 'sunucu') {
+    const { guild } = message.guild;
+    const embed = new EmbedBuilder()
+    .setColor(0x371d5d)
+    .setTitle(`${guild.name} Sunucu Bilgileri`)
+    .setThumbnail(guild.iconURL({ dynamic: true }))
+    .addFields(
+        { name: 'Kurucu', value: `<@${guild.ownerId}>`, inline: true },
         
-        // KRİTİK KONTROL: Şarkı objesi doğru alındı mı?
-        if (!song || !song.url) {
-             return message.channel.send('Şarkı bilgisi alınırken bir hata oluştu. Lütfen tekrar deneyin.');
-        }
+        { name: 'Oluşturulma Tarihi', value: guild.createdAt.toLocaleDateString('tr-TR'), inline: true },
+        { name: 'Üye Sayısı', value: `${guild.memberCount}`, inline: true },
+        { name: 'Kanal Sayısı', value: `${guild.channels.cache.size}`, inline: true },
+        { name: 'Sunucu ID', value: `${guild.id}`, inline: false }
+    )
+    .setTimestamp()
+    .setFooter({ text: `${guild.name} sunucusunda istendi` });
+    message.channel.send({ embeds: [embed] });
+}
 
+}); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
-        // --- SIRA YÖNETİMİ ---
-        if (!serverQueue) {
-            // Eğer sunucu için bir sıra yoksa, yenisini oluştur
-            const queueContruct = {
-                textChannel: message.channel,
-                voiceChannel: voiceChannel,
-                connection: null,
-                player: createAudioPlayer(),
-                songs: [],
-                volume: 5,
-                playing: true,
-            };
-
-            queue.set(message.guild.id, queueContruct);
-            queueContruct.songs.push(song); // Şarkıyı sıraya ekle
-
-            // Kanala bağlan
-            const connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: message.guild.id,
-                adapterCreator: message.guild.voiceAdapterCreator,
-                selfDeaf: false, // Sağır olmasını engelle
-            });
-            queueContruct.connection = connection;
-            connection.subscribe(queueContruct.player);
-
-            // Oynatıcı olaylarını tanımla (Şarkı bitince sıradakini çal)
-            queueContruct.player.on(AudioPlayerStatus.Idle, () => {
-                queueContruct.songs.shift(); 
-                // Boş sıra durumunda play fonksiyonu temiz çıkış yapacaktır.
-                module.exports.play(message.guild, queueContruct.songs[0], queue);
-            });
-
-            // Oynatıcı hata olaylarını tanımla
-            queueContruct.player.on('error', error => {
-                console.error(`Ses Oynatma Hatası: ${error.message}`);
-                queueContruct.textChannel.send(`Oynatma sırasında bir hata oluştu: ${error.message}`);
-            });
-            
-            // İlk şarkıyı çal
-            module.exports.play(message.guild, queueContruct.songs[0], queue);
-
-        } else {
-            // Sıra zaten varsa, şarkıyı sıraya ekle
-            serverQueue.songs.push(song);
-            return message.channel.send(`🎵 **${song.title}** sıraya eklendi!`);
-        }
-
-    } catch (error) {
-        // Genel hata yakalayıcı (bağlantı hatası, fetch hatası vb.)
-        console.error("Oynatma Hatası (Genel):", error);
-        const serverQueueOnError = queue.get(message.guild.id);
-
-        if (serverQueueOnError && serverQueueOnError.connection) {
-             serverQueueOnError.connection.destroy();
-        }
-        queue.delete(message.guild.id);
-        
-        return message.channel.send(`Bir hata oluştu ve kanaldan ayrılıyorum: ${error.message}`);
-    }
-    }
-});
-
-// --- YARDIMCI MÜZİK OYNATMA FONKSİYONU ---
-module.exports.play = async (guild, song, queue) => {
-    const serverQueue = queue.get(guild.id);
-    
-    // 🚨 KRİTİK: Şarkı yoksa (sıra bittiyse) kanaldan ÇIK
-    if (!song) {
-        if (serverQueue && serverQueue.connection) {
-            serverQueue.connection.destroy();
-            queue.delete(guild.id);
-            serverQueue.textChannel.send('Sıra bitti, kanaldan ayrılıyorum.');
-        }
-        return; 
-    }
-
-    try {
-        // play-dl ile akış oluşturma
-        const stream = await play.stream(song.url); 
-        
-        const resource = createAudioResource(stream.stream, { 
-            inputType: stream.type, 
-            inlineVolume: true 
-        });
-
-        serverQueue.player.play(resource);
-        serverQueue.textChannel.send(`🎶 Şimdi çalıyor: **${song.title}**`);
-
-    } catch (error) {
-        // Oynatma sırasında herhangi bir hata olursa
-        console.error("Oynatma Hatası:", error);
-        serverQueue.textChannel.send(`**${song.title}** çalınırken bir hata oluştu ve atlandı: ${error.message}`);
-        
-        // Hata verene şarkıyı sıradan çıkar ve sonrakini dene
-        serverQueue.songs.shift(); 
-        module.exports.play(guild, serverQueue.songs[0], queue);
-    }
-};
 
 // Düğme etkileşimlerini dinlemek için event listener
 client.on('interactionCreate', async interaction => {
