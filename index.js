@@ -373,6 +373,7 @@ else if (command === 'zar') {
                 { name: '`!kimim`', value: 'Kendiniz hakkındaki bilgileri gösterir.', inline: true },
                 { name: '`!zar`', value: '1 ile 6 arasında rastgele zar atar.', inline: true },
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
+                { name: '`!sunucu`', value: 'Sunucu hakkında temel bilgileri gösterir.', inline: true },
 
                 // Moderasyon Komutları
                 { name: '\n⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
