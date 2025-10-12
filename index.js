@@ -518,23 +518,29 @@ else if (command === 'unmute') {
     }
 }
 // 13. KOMUT: !sunucu (Temel Sunucu Bilgileri)
-else if (command === 'sunucu') {
-    const { guild } = message.guild;
-    const embed = new EmbedBuilder()
-    .setColor(0x371d5d)
-    .setTitle(`${guild.name} Sunucu Bilgileri`)
-    .setThumbnail(guild.iconURL({ dynamic: true }))
-    .addFields(
-        { name: 'Kurucu', value: `<@${guild.ownerId}>`, inline: true },
-        { name: 'Oluşturulma Tarihi', value: guild.createdAt.toLocaleDateString('tr-TR'), inline: true },
-        { name: 'Üye Sayısı', value: `${guild.memberCount}`, inline: true },
-        { name: 'Kanal Sayısı', value: `${guild.channels.cache.size}`, inline: true },
-        { name: 'Sunucu ID', value: `${guild.id}`, inline: false }
-    )
-    .setTimestamp()
-    .setFooter({ text: `${guild.name} sunucusunda istendi` });
-    message.channel.send({ embeds: [embed] });
-}
+if (command === 'sunucu') {
+        
+        // Sunucu nesnesini güvenle al (Çünkü yukarıda kontrol ettik)
+        const guild = message.guild;
+
+        // EmbedBuilder import edildiğinden emin olun!
+        const serverEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle(`${guild.name} Sunucu Bilgileri`) 
+            .setThumbnail(guild.iconURL({ dynamic: true })) 
+            .addFields(
+                { name: 'Kurucu', value: `<@${guild.ownerId}>`, inline: true }, 
+                { name: 'Üye Sayısı', value: `${guild.memberCount}`, inline: true }, 
+                { name: 'Kanal Sayısı', value: `${guild.channels.cache.size}`, inline: true }, 
+                { name: 'Oluşturulma Tarihi', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:f>`, inline: false }, 
+                { name: 'Sunucu ID', value: `${guild.id}`, inline: false } 
+            )
+            .setTimestamp() 
+            .setFooter({ text: `${guild.name} sunucusunda istendi` });
+
+        // Mesajı Gönderme
+        message.channel.send({ embeds: [serverEmbed] });
+    }
 
 }); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
