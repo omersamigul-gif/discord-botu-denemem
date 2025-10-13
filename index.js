@@ -548,6 +548,38 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [serverEmbed] });
     }
 
+    // 14. KOMUT: !kullanıcı @kullanıcı
+    else if (command === 'kullanıcı') {
+        // Eğer bir kullanıcı etiketlenmişse onu alır, yoksa mesajı yazan kişiyi hedefler.
+        const member = message.mentions.members.first() || message.member;
+        const user = member.user;
+        // Embed oluşturma
+        const userEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle(`Kullanıcı Bilgileri: ${user.tag}`)
+            .setThumbnail(user.displayAvatarURL({ dynamic: true })) // Kullanıcının avatarını alır
+            .addFields(
+                // --Kullanıcı Bilgileri--
+            { name: 'Discord ID', value: user.id, inline: true },
+            { name: 'Hesap Oluşturulma Tarihi',
+                value: `<t:${Math.floor(user.createdTimestamp / 1000)}:f>`,
+                inline: true
+            },
+            // --Sunucudaki Bilgileri-
+            { name: 'Sunucuya Katılma', 
+              value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:f>`, 
+              inline: true }, // Sunucuya ne zaman katıldı
+            { name: 'Roller', 
+              value: member.roles.cache.size > 1 ? member.roles.cache.filter(r => r.name !== '@everyone').map(r => r.name).join(', ') : 'Yok', 
+              inline: false } // @everyone rolünü hariç tutar
+
+            )
+            .setTimestamp()
+            .setFooter({ text: `${message.guild.name} sunucusunda istendi` });
+        // Embed mesajını gönderme
+        message.channel.send({ embeds: [userEmbed] });
+    }
+    
 }); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
