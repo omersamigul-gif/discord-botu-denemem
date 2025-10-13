@@ -386,6 +386,7 @@ else if (command === 'zar') {
                 { name: '`!rol @kullanıcı [Rol Adı]`', value: 'Kullanıcıya belirtilen rolü verir (**Rolleri Yönet** yetkisi gerekir).', inline: true },
                 { name: '`!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
                 { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
+                { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
