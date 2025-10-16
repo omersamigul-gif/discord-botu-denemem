@@ -282,7 +282,7 @@ else if (command === 'zar') {
             await sendLog(logEmbed);
 
             // 2. İŞLEM KANALINA BİLDİRİM
-            message.channel.send(`${targetUser.user.tag} kullanıcısı ${durationFormatted} süreyle susturuldu.`);
+            message.channel.send(`${targetUser.user.tag} kullanıcısı ${durationFormatted} süreyle susturuldu. Sebep: ${reason}`);
 
         } catch (error) {
             console.error("MUTE HATASI:", error);
