@@ -78,7 +78,7 @@ client.once('clientReady', () => {
     activities: [
       { name: '!yardim | v1.1', type: 0 } // Oynuyor
     ],
-    status: 'online' // "online", "idle", "dnd"
+    status: 'online'
   });
 });
 
