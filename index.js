@@ -74,6 +74,12 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     console.log(`Bot olarak giriş yapıldı: ${client.user.tag}`);
     console.log('-------------------------------');
+    client.user.setPresence({
+    activities: [
+      { name: '!yardim | v1.1', type: 0 } // Oynuyor
+    ],
+    status: 'online' // "online", "idle", "dnd"
+  });
 });
 
 
