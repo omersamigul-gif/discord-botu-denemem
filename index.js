@@ -356,7 +356,7 @@ else if (command === 'zar') {
             await sendLog(logEmbed);
 
             // 2. İŞLEM KANALINA BİLDİRİM
-            message.channel.send(`${targetUser.user.tag} kullanıcısı sunucudan **KALICI OLARAK** yasaklandı. Sebep: ${reason}`);
+            message.channel.send(`${targetUser.user.tag} kullanıcısı sunucudan **kalıcı olarak** yasaklandı. Sebep: ${reason}`);
 
         } catch (error) {
             console.error("BAN HATASI:", error);
@@ -369,7 +369,7 @@ else if (command === 'zar') {
         
         const helpEmbed = new EmbedBuilder()
             .setColor(0x371d5d) 
-            .setTitle('メッド#4452 Bot Komutları')
+            .setTitle('# **メッド Bot Komutları**')
             .setDescription('İşte bu sunucuda kullanabileceğin tüm komutlar ve yetkileri:')
             .setThumbnail(message.guild.iconURL())
             .addFields(
