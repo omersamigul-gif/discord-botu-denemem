@@ -369,7 +369,7 @@ else if (command === 'zar') {
         
         const helpEmbed = new EmbedBuilder()
             .setColor(0x371d5d) 
-            .setTitle('# **メッド Bot Komutları**')
+            .setTitle('メッド#4452 Bot Komutları')
             .setDescription('İşte bu sunucuda kullanabileceğin tüm komutlar ve yetkileri:')
             .setThumbnail(message.guild.iconURL())
             .addFields(
