@@ -15,6 +15,8 @@ const {
     PermissionsBitField
 } = require('discord.js');
 
+const gifEngellemeDurumu = new Map();
+
 // Botu 7/24 aktif tutmak için Express modülleri
 const express = require('express');
 const app = express();
@@ -90,6 +92,24 @@ client.on('messageCreate', async message => {
                            
     if (message.author.bot || !message.guild) return;
 
+    const guildId = message.guild.id;
+    if (gifEngellemeDurumu.get(guildId)) {
+        const isGif = message.content.toLowerCase().includes('.gif') ||
+        message.attachments.some(a => a.name && a.name.toLowerCase().endsWith('.gif'));
+
+        if (isGif) {
+            if (message.guild.members.me.permissions.has('ManageMessages')) {
+                message.delete()
+                    .then(() => {
+                        message.channel.send(`🚫 **${message.author.tag}**, bu kanalda GIF gönderimi engellendi!`)
+                            .then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
+                    })
+                    .catch(e => console.error('GİF silme hatası:', e));
+                return;
+            }
+        }
+    }
+
     if (message.author.bot || !message.content.startsWith(prefix)) return;
 
     if (!message.guild) return;
@@ -127,16 +147,6 @@ if (command === 'merhaba') {
         message.channel.send(`Merhaba, **${message.author.username}**! Ben med1wsg tarafından yapılmış メッド#4452 botu!`);
     }
 
-    // 2. KOMUT: !kimim
-    else if (command === 'kimim') {
-        const joinDate = message.member.joinedAt.toLocaleDateString("tr-TR");
-
-    message.channel.send(
-        `**${message.author.username}** hakkında bilgiler:\n` +
-        `> **Discord ID:** ${message.author.id}\n` +
-        `> **Sunucuya Katılım Tarihi:** ${joinDate}`
-    );
-}
 
 // Ticket Kurulum Komutu
 else if (command === 'ticket-setup') {
@@ -365,7 +375,7 @@ else if (command === 'zar') {
     }
 
     // 9. KOMUT: !yardım (Tüm komutları gösterir)
-    else if (command === 'yardim') {
+    else if (command === 'yardim'|| command === 'help' || command === 'h' || command === 'y') {
         
         const helpEmbed = new EmbedBuilder()
             .setColor(0x371d5d) 
@@ -556,7 +566,7 @@ if (command === 'sunucu') {
     }
 
     // 14. KOMUT: !kullanıcı @kullanıcı
-    else if (command === 'kullanıcı') {
+    else if (command === 'kullanıcı' || command === 'kimim' ) {
         // Eğer bir kullanıcı etiketlenmişse onu alır, yoksa mesajı yazan kişiyi hedefler.
         const member = message.mentions.members.first() || message.member;
         const user = member.user;
@@ -586,7 +596,53 @@ if (command === 'sunucu') {
         // Embed mesajını gönderme
         message.channel.send({ embeds: [userEmbed] });
     }
+    // 15. KOMUT: !gif-engelleme
+    else if (command === 'gif-engelleme') {
+    // 1. İZİN KONTROLÜ: Yönetici izni yoksa hemen çık.
+    if (!message.member.permissions.has('Administrator')) {
+        return message.reply({ content: 'Bu komutu kullanmak için **Yönetici** iznine sahip olmalısın.' });
+    }
+
+    const guildId = message.guild.id;
+    const mevcutDurum = gifEngellemeDurumu.get(guildId) || false; // Mevcut durumu al
+
+    // 2. YENİ DURUMU AYARLAMA VE KAYDETME
+    const yeniDurum = !mevcutDurum; // Mevcut durumun tersini al (toggle)
+    gifEngellemeDurumu.set(guildId, yeniDurum); // Yeni durumu kaydet
+
+    // 3. KULLANICIYA BİLDİRİM GÖNDERME
+    const durumMetni = yeniDurum ? '✅ **AÇIK**' : '❌ **KAPALI**';
     
+    const engellemeEmbed = new EmbedBuilder()
+        .setColor(yeniDurum ? 0x00FF00 : 0xFF0000) // Yeşil veya Kırmızı
+        .setTitle('🚫 GIF Engelleme Sistemi')
+        .setDescription(`GIF Engelleme artık sunucuda **${durumMetni}**.\n(Gönderilen GIF içeren mesajlar anında silinecektir.)`)
+        .setTimestamp();
+        
+    return message.channel.send({ embeds: [engellemeEmbed] });
+}
+    // 16. KOMUT: !çekiliş
+    else if (command === 'çekiliş' || command === 'cekilis') {
+        // Kullanım: !çekiliş [süre] [ödül]
+        if (args.length < 2) {
+            return message.reply('Çekiliş komutunu doğru kullanmalısın: `!çekiliş [süre (ör: 10s/5m/1h)] [ödül]`');
+            }
+            const sureString = args[0];
+            const odul = args.slice(1).join(' ');
+            // Süre hesaplama ve başlatma komutları buraya gelecek
+            const cekilisEmbed = new EmbedBuilder()
+                .setColor(0x371d5d)
+                .setTitle('🎉 Çekiliş Başladı! 🎉')
+                .setDescription(`**Ödül:** ${odul}\n**Süre:** ${sureString}`)
+                .addFields(
+                    { name: 'Nasıl Katılırım?', value: 'Aşağıdaki 🎉 reaksiyonuna tıkla!', inline: false }
+                )
+                .setTimestamp()
+                .setFooter({ text: `Çekilişi Başlatan: ${message.author.tag}` });
+                message.channel.send({ embeds: [cekilisEmbed] }).then(msg => {
+                    msg.react('🎉'); // Reaksiyon ekler
+                });
+    }
 }); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
