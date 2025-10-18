@@ -211,45 +211,45 @@ else if (command === 'zar') {
 
         const amount = parseInt(args[0]) + 1;
 
-        if (isNaN(amount) || amount <= 1 || amount > 200) {
-            return message.channel.send('Lütfen 1 ile 200 arasında bir sayı girin.');
-        }
-
-        try {
-            await message.delete();
-            const messages = await message.channel.bulkDelete(amount - 1, true);
-
-            // --- LOG KAYDI OLUŞTURMA ---
-            const logEmbed = new EmbedBuilder()
-                .setColor(0x371d5d)
-                .setTitle('🗑 TOPLU MESAJ SİLİNDİ')
-                .addFields(
-                    { name: 'Kanal', value: `#${message.channel.name}`, inline: true },
-                    { name: 'Yetkili', value: `${message.author.tag}`, inline: true },
-                    { name: 'Miktar', value: `${messages.size} adet`, inline: true }
-                )
-                .setTimestamp();
-            await sendLog(logEmbed);
-
-            // --- İŞLEM KANALINA BİLDİRİM ---
-            const deleteEmbed = new EmbedBuilder()
-                .setColor(0x371d5d) // Mor
-                .setDescription(`🗑 **${messages.size}** adet mesaj başarıyla silindi.`)
-                .setFooter({ text: `Yetkili: ${message.author.tag}` });
-                
-            const sentMessage = await message.channel.send({ embeds: [deleteEmbed] });
-            setTimeout(async () => {
-                const fetchedMessage = await message.channel.messages.fetch(sentMessage.id).catch(() => null);
-                if (fetchedMessage) {
-                    await sentMessage.delete();
-                }
-            }, 5000);
-
-        } catch (error) {
-            console.error(error);
-            message.channel.send(`Mesajları silerken bir hata oluştu: ${error.message}`);
-        }
+    if (isNaN(amount) || amount <= 1 || amount > 100) {
+        return message.channel.send('Lütfen 1 ile 99 arasında bir sayı girin.');
     }
+
+    try {
+        const messages = await message.channel.bulkDelete(amount, true);
+
+        // --- LOG KAYDI OLUŞTURMA ---
+        const logEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle('🗑 TOPLU MESAJ SİLİNDİ')
+            .addFields(
+                { name: 'Kanal', value: `#${message.channel.name}`, inline: true },
+                { name: 'Yetkili', value: `${message.author.tag}`, inline: true },
+                { name: 'Miktar', value: `${messages.size - 1} adet`, inline: true }
+            )
+            .setTimestamp();
+        await sendLog(logEmbed);
+
+        // --- İŞLEM KANALINA BİLDİRİM ---
+        const deleteEmbed = new EmbedBuilder()
+            .setColor(0x371d5d) // Mor
+            .setDescription(`🗑 **${messages.size - 1}** adet mesaj başarıyla silindi.`)
+            .setFooter({ text: `Yetkili: ${message.author.tag}` });
+            
+        const sentMessage = await message.channel.send({ embeds: [deleteEmbed] });
+        setTimeout(async () => {
+            try {
+                await sentMessage.delete();
+            } catch (e) {
+                // Mesaj zaten silinmiş olabilir, hatayı yoksay.
+            }
+        }, 5000);
+
+    } catch (error) {
+        console.error('Mesaj silme hatası:', error);
+        message.channel.send('Mesajları silerken bir hata oluştu. (Mesajlar 14 günden eski olabilir.)');
+    }
+}
 
     // 6. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
     else if (command === 'mute') {
