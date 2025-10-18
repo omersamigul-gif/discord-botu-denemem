@@ -17,6 +17,7 @@ const {
 
 const gifEngellemeDurumu = new Map();
 
+
 // Botu 7/24 aktif tutmak için Express modülleri
 const express = require('express');
 const app = express();
@@ -92,20 +93,30 @@ client.on('messageCreate', async message => {
                            
     if (message.author.bot || !message.guild) return;
 
-    const guildId = message.guild.id;
-    if (gifEngellemeDurumu.get(guildId)) {
-        const isGif = message.content.toLowerCase().includes('.gif') ||
-        message.attachments.some(a => a.name && a.name.toLowerCase().endsWith('.gif'));
+    const channelId = message.channel.id; // Mesajın geldiği kanalın ID'sini al
+
+    // Artık channelId'yi kontrol ediyoruz
+    if (gifEngellemeDurumu.get(channelId)) { 
+        
+        // GÜÇLENDİRİLMİŞ GIF KONTROLÜ (Aynı kalacak)
+        const content = message.content.toLowerCase();
+        
+        const isGif = 
+            content.includes('.gif') ||
+            content.includes('tenor.com/view/') || 
+            content.includes('giphy.com/media/') || 
+            message.attachments.some(a => a.name && a.name.toLowerCase().endsWith('.gif'));
 
         if (isGif) {
+            // Mesajı silme yetkisi kontrolü
             if (message.guild.members.me.permissions.has('ManageMessages')) {
                 message.delete()
                     .then(() => {
                         message.channel.send(`🚫 **${message.author.tag}**, bu kanalda GIF gönderimi engellendi!`)
-                            .then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
+                                       .then(m => setTimeout(() => m.delete().catch(() => {}), 5000)); 
                     })
-                    .catch(e => console.error('GİF silme hatası:', e));
-                return;
+                    .catch(e => console.error('GIF silme hatası:', e));
+                return; 
             }
         }
     }
@@ -598,25 +609,31 @@ if (command === 'sunucu') {
     }
     // 15. KOMUT: !gif-engelleme
     else if (command === 'gif-engelleme') {
-    // 1. İZİN KONTROLÜ: Yönetici izni yoksa hemen çık.
+    
+    // 1. İZİN KONTROLÜ
     if (!message.member.permissions.has('Administrator')) {
         return message.reply({ content: 'Bu komutu kullanmak için **Yönetici** iznine sahip olmalısın.' });
     }
 
-    const guildId = message.guild.id;
-    const mevcutDurum = gifEngellemeDurumu.get(guildId) || false; // Mevcut durumu al
+    // 🚨 HEDEF KANALI BELİRLEME: Etiketlenen kanal yoksa, komutun yazıldığı kanalı kullan
+    const targetChannel = message.mentions.channels.first() || message.channel;
+    const targetChannelId = targetChannel.id;
 
-    // 2. YENİ DURUMU AYARLAMA VE KAYDETME
-    const yeniDurum = !mevcutDurum; // Mevcut durumun tersini al (toggle)
-    gifEngellemeDurumu.set(guildId, yeniDurum); // Yeni durumu kaydet
+    // 2. YENİ DURUMU AYARLAMA VE KAYDETME (Channel ID ile)
+    const mevcutDurum = gifEngellemeDurumu.get(targetChannelId) || false;
+    const yeniDurum = !mevcutDurum;
+    gifEngellemeDurumu.set(targetChannelId, yeniDurum); // Artık Channel ID'yi anahtar olarak kullanıyor!
 
     // 3. KULLANICIYA BİLDİRİM GÖNDERME
     const durumMetni = yeniDurum ? '✅ **AÇIK**' : '❌ **KAPALI**';
     
+    // Eğer etiketlenen kanal mesajın yazıldığı kanal değilse özel isim kullan
+    const hedefMetni = targetChannel.id === message.channel.id ? '**bu kanalda**' : `**#${targetChannel.name}** kanalında`;
+
     const engellemeEmbed = new EmbedBuilder()
-        .setColor(yeniDurum ? 0x00FF00 : 0xFF0000) // Yeşil veya Kırmızı
+        .setColor(yeniDurum ? 0x00FF00 : 0xFF0000) 
         .setTitle('🚫 GIF Engelleme Sistemi')
-        .setDescription(`GIF Engelleme artık sunucuda **${durumMetni}**.\n(Gönderilen GIF içeren mesajlar anında silinecektir.)`)
+        .setDescription(`GIF Engelleme artık ${hedefMetni} **${durumMetni}**.\n(Gönderilen GIF içeren mesajlar anında silinecektir.)`)
         .setTimestamp();
         
     return message.channel.send({ embeds: [engellemeEmbed] });
