@@ -79,7 +79,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!yardim | v1.1', type: 0 } // Oynuyor
+      { name: '!yardim | v1.2', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -414,6 +414,7 @@ else if (command === 'zar') {
                 { name: '`!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
                 { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
                 { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
+                { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler', inline: true}
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
