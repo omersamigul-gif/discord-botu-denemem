@@ -211,7 +211,7 @@ else if (command === 'zar') {
 
         const amount = parseInt(args[0]) + 1;
 
-        if (isNaN(amount) || amount <= 1 || amount > 100) {
+        if (isNaN(amount) || amount <= 1 || amount > 200) {
             return message.channel.send('Lütfen 1 ile 99 arasında bir sayı girin.');
         }
 
