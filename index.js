@@ -79,7 +79,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!yardim | v1.2', type: 0 } // Oynuyor
+      { name: '!yardim | v2.0', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -401,6 +401,8 @@ else if (command === 'zar') {
                 { name: '`!zar`', value: '1 ile 6 arasında rastgele zar atar.', inline: true },
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
                 { name: '`!sunucu`', value: 'Sunucu hakkında temel bilgileri gösterir.', inline: true },
+                { name: '`!anket`', value: 'Anket oluşturur.', inline: true},
+                { name: '`!çekiliş`',value: 'Çekiliş oluşturur.', inline: true},
 
                 // Moderasyon Komutları
                 { name: '\n⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
@@ -414,7 +416,7 @@ else if (command === 'zar') {
                 { name: '`!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
                 { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
                 { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
-                { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler', inline: true}
+                { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler.', inline: true}
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
