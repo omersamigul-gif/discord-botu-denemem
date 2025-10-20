@@ -628,7 +628,7 @@ if (command === 'sunucu') {
     gifEngellemeDurumu.set(targetChannelId, yeniDurum); // Artık Channel ID'yi anahtar olarak kullanıyor!
 
     // 3. KULLANICIYA BİLDİRİM GÖNDERME
-    const durumMetni = yeniDurum ? '✅ **AÇIK**' : '❌ **KAPALI**';
+    const durumMetni = yeniDurum ? '✅ AÇIK' : '❌ KAPALI';
     
     // Eğer etiketlenen kanal mesajın yazıldığı kanal değilse özel isim kullan
     const hedefMetni = targetChannel.id === message.channel.id ? '**bu kanalda**' : `**#${targetChannel.name}** kanalında`;
