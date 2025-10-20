@@ -79,7 +79,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!yardim | v2.0', type: 0 } // Oynuyor
+      { name: '!h | v2.0', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -396,7 +396,7 @@ else if (command === 'zar') {
             .addFields(
                 // Temel Komutlar
                 { name: '🌐 Temel Komutlar', value: '-------------------------------', inline: false },
-                { name: '`!merhaba`', value: 'Botun size selam vermesini sağlar.', inline: true },
+                { name: '`!merhaba`', value: 'Bot size selam verir.', inline: true },
                 { name: '`!kimim`', value: 'Kendiniz hakkındaki bilgileri gösterir.', inline: true },
                 { name: '`!zar`', value: '1 ile 6 arasında rastgele zar atar.', inline: true },
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
@@ -413,7 +413,7 @@ else if (command === 'zar') {
                 { name: '`!ban @kullanıcı [sebep]`', value: 'Kullanıcıyı kalıcı yasaklar (**Üyeleri Yasakla** yetkisi gerekir).', inline: true },
                 { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Kullanıcının takma adını değiştirir (**Takma Adları Yönet** yetkisi gerekir).', inline: true },
                 { name: '`!rol @kullanıcı [Rol Adı]`', value: 'Kullanıcıya belirtilen rolü verir (**Rolleri Yönet** yetkisi gerekir).', inline: true },
-                { name: '`!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
+                { name: '`!y/!h/!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
                 { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
                 { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
                 { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler.', inline: true}
