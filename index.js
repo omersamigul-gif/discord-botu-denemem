@@ -403,6 +403,7 @@ else if (command === 'zar') {
                 { name: '`!sunucu`', value: 'Sunucu hakkında temel bilgileri gösterir.', inline: true },
                 { name: '`!anket`', value: 'Anket oluşturur.', inline: true},
                 { name: '`!çekiliş`',value: 'Çekiliş oluşturur.', inline: true},
+                { name: '`!y/!h/!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
 
                 // Moderasyon Komutları
                 { name: '\n⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
@@ -413,7 +414,6 @@ else if (command === 'zar') {
                 { name: '`!ban @kullanıcı [sebep]`', value: 'Kullanıcıyı kalıcı yasaklar (**Üyeleri Yasakla** yetkisi gerekir).', inline: true },
                 { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Kullanıcının takma adını değiştirir (**Takma Adları Yönet** yetkisi gerekir).', inline: true },
                 { name: '`!rol @kullanıcı [Rol Adı]`', value: 'Kullanıcıya belirtilen rolü verir (**Rolleri Yönet** yetkisi gerekir).', inline: true },
-                { name: '`!y/!h/!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
                 { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
                 { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
                 { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler.', inline: true}
