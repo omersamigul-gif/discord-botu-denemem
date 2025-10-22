@@ -80,7 +80,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!h | v2.0', type: 0 } // Oynuyor
+      { name: '!h | v2.1', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -194,14 +194,7 @@ else if (command === 'zar') {
     // 4. KOMUT: !ping 
     else if (command === 'ping') {
         const latency = Math.round(client.ws.ping);
-
-        const pingEmded = new EmbedBuilder()
-            .setColor(0x371d5d)
-            .setTitle('Pong!')
-            .setDescription(`**Gecikme (Latency):** ${latency}ms\n\n*(Bu değer, botun Discord sunucularına yanıt verme hızını gösterir.)*`)
-            .setTimestamp();
-
-        message.channel.send({ embeds: [pingEmded] });
+        message.channel.send(`Pong! Gecikme süresi: **${latency}ms.**`)
     }
     
     // 5. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
@@ -402,22 +395,12 @@ else if (command === 'zar') {
                 { name: '`!zar`', value: '1 ile 6 arasında rastgele zar atar.', inline: true },
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
                 { name: '`!sunucu`', value: 'Sunucu hakkında temel bilgileri gösterir.', inline: true },
-                { name: '`!anket`', value: 'Anket oluşturur.', inline: true},
-                { name: '`!çekiliş`',value: 'Çekiliş oluşturur.', inline: true},
                 { name: '`!y/!h/!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
-
-                // Moderasyon Komutları
-                { name: '\n⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
-                { name: '`!sil [miktar]`', value: 'Mesajları siler (**Mesajları Yönet** yetkisi gerekir).', inline: true },
-                { name: '`!mute @kullanıcı [süre]`', value: 'Kullanıcıyı süreli susturur (**Üyeleri Denetle** yetkisi gerekir).', inline: true },
-                { name: '`!kick @kullanıcı [sebep]`', value: 'Kullanıcıyı sunucudan atar (**Üyeleri At** yetkisi gerekir).', inline: true },
-                { name: '`!unmute @kullanıcı`', value: 'Kullanıcının susturmasını kaldırır (**Üyeleri Denetle** yetkisi gerekir).', inline: true },
-                { name: '`!ban @kullanıcı [sebep]`', value: 'Kullanıcıyı kalıcı yasaklar (**Üyeleri Yasakla** yetkisi gerekir).', inline: true },
-                { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Kullanıcının takma adını değiştirir (**Takma Adları Yönet** yetkisi gerekir).', inline: true },
-                { name: '`!rol @kullanıcı [Rol Adı]`', value: 'Kullanıcıya belirtilen rolü verir (**Rolleri Yönet** yetkisi gerekir).', inline: true },
-                { name: '`!ticket-setup`', value: 'Destek talebi (ticket) sistemini kurar (**Yönetici** yetkisi gerekir).', inline: true },
-                { name: '`!kullanıcı @kullanıcı`', value: 'Kullanıcı hakkında detaylı bilgi verir.', inline: true },
-                { name: '`!gif-engelleme #[kanal]`', value: 'Seçilen kanalda (özellik aktif edildikten sonra) GIF mesajlarını siler.', inline: true}
+                { name: '`!admin-yardim/!admin-help`', value: 'Moderasyon komutlarını gösterir. (Bu komutu kullanmak için en az **Mesajları Yönet** yetkisine sahip olmalısın.)', inline: true },
+                // Sosyal ve etkileşim komutları
+                { name: '\n✨ Sosyal & Etkileşim Komutları', value: '-------------------------------', inline: false },
+                { name: '`!çekiliş [süre] [ödül]`', value: 'Süreli bir çekiliş başlatır (**Sunucuyu Yönet** izni gerekir).', inline: true },
+                { name: '`!anket [soru]`', value: 'Basit bir anket başlatır (**Mesajları Yönet** izni gerekir).', inline: true },
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
@@ -779,6 +762,37 @@ if (command === 'sunucu') {
     await pollMessage.react('👍');
     await pollMessage.react('👎');
 }
+   
+    // 18. KOMUT: !admin-yardim/admin-help
+    else if (command === 'admin-yardim' || command === 'admin-help') {
+
+        // Bu komutu herkesin değil, sadece Yönetici/Moderatör rolündekilerin görmesi daha uygundur.
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+             return message.reply('Bu komutu kullanmak için en az **Mesajları Yönet** yetkisine sahip olmalısın.');
+        }
+
+        const adminHelpEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle('🚨 YÖNETİCİ/MODERASYON KOMUTLARI')
+            .setDescription('Bu komutları kullanmak için gerekli izinlere sahip olmalısın.')
+            .setThumbnail(message.guild.iconURL())
+            .addFields(
+                { name: '⚔ Moderasyon Komutları', value: '-------------------------------', inline: false },
+                { name: '`!sil [miktar]`', value: 'Mesajları siler (**Mesajları Yönet**).', inline: true },
+                { name: '`!mute @kullanıcı [süre]`', value: 'Kullanıcıyı süreli susturur (**Üyeleri Denetle**).', inline: true },
+                { name: '`!unmute @kullanıcı`', value: 'Susturmayı kaldırır (**Üyeleri Denetle**).', inline: true },
+                { name: '`!kick @kullanıcı [sebep]`', value: 'Kullanıcıyı atar (**Üyeleri At**).', inline: true },
+                { name: '`!ban @kullanıcı [sebep]`', value: 'Kullanıcıyı kalıcı yasaklar (**Üyeleri Yasakla**).', inline: true },
+                { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Takma ad değiştirir (**Takma Adları Yönet**).', inline: true },
+                { name: '`!rol @kullanıcı @[Rol Adı]`', value: 'Kullanıcıya rol verir (**Rolleri Yönet**).', inline: true },
+                { name: '`!gif-engelleme #[kanal]`', value: 'Belirtilen kanalda GIF silmeyi aç/kapat (**Yönetici**).', inline: true},
+            )
+            .setTimestamp()
+            .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
+
+        message.channel.send({ embeds: [adminHelpEmbed] });
+    }
+
 }); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
