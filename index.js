@@ -185,19 +185,19 @@ else if (command === 'ticket-setup') {
     message.delete(); // Kurulum komutunu silebiliriz
 }
 
-// 3. KOMUT: !zar
+// 2. KOMUT: !zar
 else if (command === 'zar') {
     const zar = Math.floor(Math.random() * 6) + 1; 
     message.channel.send(`${message.author.username}, zarın **${zar}** geldi!`);
 }
 
-    // 4. KOMUT: !ping 
+    // 3. KOMUT: !ping 
     else if (command === 'ping') {
         const latency = Math.round(client.ws.ping);
         message.channel.send(`Pong! Gecikme süresi: **${latency}ms.**`)
     }
     
-    // 5. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
+    // 4. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
     else if (command === 'sil') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
             return message.channel.send('Bu komutu kullanmak için **Mesajları Yönet** yetkisine sahip olmalısın.');
@@ -245,7 +245,7 @@ else if (command === 'zar') {
     }
 }
 
-    // 6. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
+    // 5. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
     else if (command === 'mute') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Denetle** yetkisine sahip olmalısın.');
@@ -305,7 +305,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 7. KOMUT: !kick @kullanıcı [sebep]
+    // 6. KOMUT: !kick @kullanıcı [sebep]
     else if (command === 'kick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Atma** yetkisine sahip olmalısın.');
@@ -342,7 +342,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 8. KOMUT: !ban @kullanıcı [sebep]
+    // 7. KOMUT: !ban @kullanıcı [sebep]
     else if (command === 'ban') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Yasakla** yetkisine sahip olmalısın.');
@@ -379,7 +379,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 9. KOMUT: !yardım (Tüm komutları gösterir)
+    // 8. KOMUT: !yardım (Tüm komutları gösterir)
     else if (command === 'yardim'|| command === 'help' || command === 'h' || command === 'y') {
         
         const helpEmbed = new EmbedBuilder()
@@ -408,7 +408,7 @@ else if (command === 'zar') {
         message.channel.send({ embeds: [helpEmbed] });
     }
     
-    // 10. KOMUT: !nick [@kullanıcı] [Yeni Ad]
+    // 9. KOMUT: !nick [@kullanıcı] [Yeni Ad]
     else if (command === 'nick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return message.channel.send('Bu komutu kullanmak için **Takma Adları Yönet** yetkisine sahip olmalısın.');
@@ -434,7 +434,7 @@ else if (command === 'zar') {
             });
     }
 
-    // 11. KOMUT: !rol @kullanıcı [Rol Adı]
+    // 10. KOMUT: !rol @kullanıcı [Rol Adı]
     else if (command === 'rol') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
             return message.channel.send('Bu komutu kullanmak için **Rolleri Yönet** yetkisine sahip olmalısın.');
@@ -487,7 +487,7 @@ else if (command === 'zar') {
         return;
     }
 
-// 12. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
+// 11. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
 else if (command === 'unmute') {
     // 1. İzin Kontrolü
     if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
@@ -533,7 +533,7 @@ else if (command === 'unmute') {
         message.channel.send(`${targetMember.user.tag} zaten susturulmamış.`);
     }
 }
-// 13. KOMUT: !sunucu (Temel Sunucu Bilgileri)
+// 12. KOMUT: !sunucu (Temel Sunucu Bilgileri)
 if (command === 'sunucu') {
         
         // Sunucu nesnesini güvenle al (Çünkü yukarıda kontrol ettik)
@@ -563,7 +563,7 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [serverEmbed] });
     }
 
-    // 14. KOMUT: !kullanıcı @kullanıcı
+    // 13. KOMUT: !kullanıcı @kullanıcı
     else if (command === 'kullanıcı' || command === 'kimim' ) {
         // Eğer bir kullanıcı etiketlenmişse onu alır, yoksa mesajı yazan kişiyi hedefler.
         const member = message.mentions.members.first() || message.member;
@@ -594,7 +594,7 @@ if (command === 'sunucu') {
         // Embed mesajını gönderme
         message.channel.send({ embeds: [userEmbed] });
     }
-    // 15. KOMUT: !gif-engelleme
+    // 14. KOMUT: !gif-engelleme
     else if (command === 'gif-engelleme') {
     
     // 1. İZİN KONTROLÜ
@@ -625,108 +625,8 @@ if (command === 'sunucu') {
         
     return message.channel.send({ embeds: [engellemeEmbed] });
 }
-    // 16. KOMUT: !çekiliş
-    else if (command === 'çekiliş') {
     
-    // 1. İzin Kontrolü (Sadece Sunucuyu Yönet izni olanlar başlatabilsin)
-    if (!message.member.permissions.has('ManageGuild')) {
-        return message.reply('Bu komutu kullanmak için **Sunucuyu Yönet** iznine sahip olmalısın.');
-    }
-
-    // 2. Format Kontrolü (Örn: !çekiliş 10s Ödül)
-    if (args.length < 2) {
-        return message.reply('Çekiliş formatı: `!çekiliş [süre (ör: 10s, 5m, 1h)] [ödül]`');
-    }
-
-    const sureString = args[0].toLowerCase();
-    const odul = args.slice(1).join(' ');
-
-    // 3. SÜRE HESAPLAMA (Manuel Parsing)
-    let sureMs = 0;
-    // Süre regex'i (Örnek: 10s, 5m, 1h)
-    const sureRegex = sureString.match(/^(\d+)([smhd])$/); 
-
-    if (!sureRegex) {
-        return message.reply('Geçerli bir süre birimi kullanmalısın (ör: 10s, 5m, 1h, 1d).');
-    }
-
-    const miktar = parseInt(sureRegex[1]);
-    const birim = sureRegex[2];
-
-    switch (birim) {
-        case 's': sureMs = miktar * 1000; break; // Saniye
-        case 'm': sureMs = miktar * 60 * 1000; break; // Dakika
-        case 'h': sureMs = miktar * 60 * 60 * 1000; break; // Saat
-        case 'd': sureMs = miktar * 24 * 60 * 60 * 1000; break; // Gün
-        default: return message.reply('Geçersiz süre birimi.');
-    }
-    
-    // Bitiş zamanını Discord formatında hesapla (Discord'un zaman etiketleri için)
-    const bitisTimestamp = Math.floor((Date.now() + sureMs) / 1000); 
-
-    // 4. Çekiliş Başlangıç Embed'i
-    const cekilisEmbed = new EmbedBuilder()
-        .setColor(0x371d5d)
-        .setTitle('🎉 ÇEKİLİŞ BAŞLADI! 🎉')
-        .setDescription(`**Ödül:** ${odul}\n**Bitiş:** <t:${bitisTimestamp}:R> (<t:${bitisTimestamp}:f>)\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
-        .setTimestamp()
-        .setFooter({ text: `Başlatan: ${message.author.tag}` });
-    
-    // Başlangıç mesajını sil (temizlik için)
-    message.delete().catch(() => {});
-
-    message.channel.send({ embeds: [cekilisEmbed] }).then(msg => {
-        msg.react('🎉');
-
-        // 5. ZAMANLAYICI BAŞLATMA VE BİTİRME MANTIĞI
-        setTimeout(() => {
-            
-            // Reaksiyonları güncellemek için mesajı tekrar çek (fetch)
-            msg.reactions.cache.get('🎉')?.users.fetch().then(users => {
-                
-                // Botu ve mesajı göndereni katılımcı listesinden çıkar
-                const katilimcilar = users.filter(user => !user.bot && user.id !== message.author.id); 
-                
-                if (katilimcilar.size === 0) {
-                    // Yeterli katılımcı yoksa
-                    msg.edit({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0x371d5d)
-                            .setTitle('🚫 ÇEKİLİŞ BİTTİ!')
-                            .setDescription(`**Ödül:** ${odul}\nYeterli katılımcı yoktu.`)
-                            .setFooter({ text: 'Kazanan yok' })
-                            .setTimestamp()]
-                    });
-                    return message.channel.send(`Üzgünüm, çekilişe yeterli katılım olmadı.`);
-                }
-
-                // Rastgele Kazanan Seçme
-                const kazanan = katilimcilar.random();
-                
-                // Kazananı Duyurma Embed'i Düzenleme
-                msg.edit({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0x0000FF)
-                        .setTitle('🏆 ÇEKİLİŞ BİTTİ! 🏆')
-                        .setDescription(`**Ödül:** ${odul}\n**Kazanan:** ${kazanan} tebrikler!`)
-                        .setFooter({ text: `Çekilişi ${message.author.tag} başlattı.` })
-                        .setTimestamp()]
-                });
-                
-                // Kanalda Kazananı Etiketleme
-                message.channel.send(`🎉 Tebrikler, ${kazanan}! **${odul}** kazandın!`);
-
-            }).catch(e => {
-                console.error('Çekiliş bitiş hatası:', e);
-                message.channel.send('Çekiliş sonlandırma sırasında bir hata oluştu.');
-            });
-
-        }, sureMs); // Belirlenen süre sonunda çalış
-
-    }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
-}
-
-    // 16. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
+    // 15. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
     else if (command === 'çekiliş' || command === 'cekilis') {
         
         // 1. İzin Kontrolü (Sunucuyu Yönet izni gerek)
@@ -841,7 +741,7 @@ if (command === 'sunucu') {
         }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
     }
    
-    // 18. KOMUT: !admin-yardim/admin-help
+    // 16. KOMUT: !admin-yardim/admin-help
     else if (command === 'admin-yardim' || command === 'admin-help') {
 
         // Bu komutu herkesin değil, sadece Yönetici/Moderatör rolündekilerin görmesi daha uygundur.
