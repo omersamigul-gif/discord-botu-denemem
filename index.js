@@ -752,23 +752,38 @@ if (command === 'sunucu') {
 
         const miktar = parseInt(sureRegex[1]);
         const birim = sureRegex[2];
-
+        
+        // SÜRE METNİ HAZIRLAMA VE MS HESAPLAMA
+        let sureMetni; 
         switch (birim) {
-            case 's': sureMs = miktar * 1000; break; // Saniye
-            case 'm': sureMs = miktar * 60 * 1000; break; // Dakika
-            case 'h': sureMs = miktar * 60 * 60 * 1000; break; // Saat
-            case 'd': sureMs = miktar * 24 * 60 * 60 * 1000; break; // Gün
+            case 's': 
+                sureMs = miktar * 1000; 
+                sureMetni = `${miktar} Saniye`; 
+                break; // Saniye
+            case 'm': 
+                sureMs = miktar * 60 * 1000; 
+                sureMetni = `${miktar} Dakika`; 
+                break; // Dakika
+            case 'h': 
+                sureMs = miktar * 60 * 60 * 1000; 
+                sureMetni = `${miktar} Saat`; 
+                break; // Saat
+            case 'd': 
+                sureMs = miktar * 24 * 60 * 60 * 1000; 
+                sureMetni = `${miktar} Gün`; 
+                break; // Gün
             default: return message.reply('Geçersiz süre birimi.');
         }
         
-        // Bitiş zamanını Discord formatında hesapla (Discord'un zaman etiketleri için)
+        // Bitiş zamanını Discord formatında hesapla
         const bitisTimestamp = Math.floor((Date.now() + sureMs) / 1000); 
 
         // 4. Çekiliş Başlangıç Embed'i
         const cekilisEmbed = new EmbedBuilder()
             .setColor(0x371d5d)
             .setTitle('🎉 ÇEKİLİŞ BAŞLADI! 🎉')
-            .setDescription(`**Ödül:** ${odul}\n**Bitiş:** <t:${bitisTimestamp}:R> (<t:${bitisTimestamp}:f>)\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
+            // DÜZELTİLDİ: SureMetni eklendi.
+            .setDescription(`**Ödül:** ${odul}\n**Süre:** ${sureMetni}\n**Bitiş:** <t:${bitisTimestamp}:R> (<t:${bitisTimestamp}:f>)\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
             .setTimestamp()
             .setFooter({ text: `Başlatan: ${message.author.tag}` });
         
