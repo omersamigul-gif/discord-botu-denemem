@@ -726,42 +726,105 @@ if (command === 'sunucu') {
     }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
 }
 
-    // 17. KOMUT: !çekiliş (!poll)
-    else if (command === 'anket' || command === 'poll') {
-        // Yöneticilik izni yerine, daha basit bir izin olan 'Mesajları Yönet' yeterli.
-        if (!message.member.permissions.has('ManageMessages')) {
-            return message.reply('Bu komutu kullanmak için **Mesajları Yönet** iznine sahip olmalısın.');
+    // 16. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
+    else if (command === 'çekiliş' || command === 'cekilis') {
+        
+        // 1. İzin Kontrolü (Sunucuyu Yönet izni gerek)
+        if (!message.member.permissions.has('ManageGuild')) {
+            return message.reply('Bu komutu kullanmak için **Sunucuyu Yönet** iznine sahip olmalısın.');
         }
 
-        // Argüman Kontrolü
-        const question = args.join(' ');
-    if (!question) {
-        return message.reply('Lütfen bir anket sorusu girin. Örn: `!anket Yeni bir kanal açalım mı?`');
-    }
+        // 2. Format Kontrolü
+        if (args.length < 2) {
+            return message.reply('Çekiliş formatı: `!çekiliş [süre (ör: 10s, 5m, 1h)] [ödül]`');
+        }
 
-    // Anket Embedi
-    const pollEmbed = new EmbedBuilder()
-        .setColor(0x371d5d)
-        .setTitle('📊 SUNUCU ANKETİ')
-        .setDescription(`**Soru:** ${question}`)
-        .addFields(
-            { name: 'Oylama', value: 'Aşağıdaki reaksiyonlara tıklayarak oy verin:', inline: false },
-            { name: '✅ Kabul', value: '👍', inline: true },
-            { name: '❌ Red', value: '👎', inline: true }
-        )
-        .setTimestamp()
-        .setFooter({ text: `Başlatan: ${message.author.tag}` });
+        const sureString = args[0].toLowerCase();
+        const odul = args.slice(1).join(' ');
+
+        // 3. SÜRE HESAPLAMA (Parsing)
+        let sureMs = 0;
+        const sureRegex = sureString.match(/^(\d+)([smhd])$/); 
+
+        if (!sureRegex) {
+            return message.reply('Geçerli bir süre birimi kullanmalısın (ör: 10s, 5m, 1h, 1d).');
+        }
+
+        const miktar = parseInt(sureRegex[1]);
+        const birim = sureRegex[2];
+
+        switch (birim) {
+            case 's': sureMs = miktar * 1000; break; // Saniye
+            case 'm': sureMs = miktar * 60 * 1000; break; // Dakika
+            case 'h': sureMs = miktar * 60 * 60 * 1000; break; // Saat
+            case 'd': sureMs = miktar * 24 * 60 * 60 * 1000; break; // Gün
+            default: return message.reply('Geçersiz süre birimi.');
+        }
         
-    // Mesajı sil (temizlik için)
-    message.delete().catch(() => {});
+        // Bitiş zamanını Discord formatında hesapla (Discord'un zaman etiketleri için)
+        const bitisTimestamp = Math.floor((Date.now() + sureMs) / 1000); 
 
-    // Mesajı Gönderme ve Reaksiyon Ekleme
-    const pollMessage = await message.channel.send({ embeds: [pollEmbed] });
+        // 4. Çekiliş Başlangıç Embed'i
+        const cekilisEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle('🎉 ÇEKİLİŞ BAŞLADI! 🎉')
+            .setDescription(`**Ödül:** ${odul}\n**Bitiş:** <t:${bitisTimestamp}:R> (<t:${bitisTimestamp}:f>)\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
+            .setTimestamp()
+            .setFooter({ text: `Başlatan: ${message.author.tag}` });
+        
+        // Başlangıç mesajını sil (temizlik için)
+        message.delete().catch(() => {});
 
-    // Otomatik Reaksiyonları Ekle
-    await pollMessage.react('👍');
-    await pollMessage.react('👎');
-}
+        message.channel.send({ embeds: [cekilisEmbed] }).then(msg => {
+            msg.react('🎉');
+
+            // 5. ZAMANLAYICI BAŞLATMA VE BİTİRME MANTIĞI
+            setTimeout(() => {
+                
+                // Reaksiyonları güncellemek için mesajı tekrar çek (fetch)
+                msg.reactions.cache.get('🎉')?.users.fetch().then(users => {
+                    
+                    // Botu ve mesajı göndereni katılımcı listesinden çıkar
+                    const katilimcilar = users.filter(user => !user.bot && user.id !== message.author.id); 
+                    
+                    if (katilimcilar.size === 0) {
+                        // Yeterli katılımcı yoksa
+                        msg.edit({
+                            embeds: [new EmbedBuilder()
+                                .setColor(0xFF0000)
+                                .setTitle('🚫 ÇEKİLİŞ BİTTİ!')
+                                .setDescription(`**Ödül:** ${odul}\nYeterli katılımcı yoktu.`)
+                                .setFooter({ text: 'Kazanan yok' })
+                                .setTimestamp()]
+                        });
+                        return message.channel.send(`Üzgünüm, çekilişe yeterli katılım olmadı.`);
+                    }
+
+                    // Rastgele Kazanan Seçme
+                    const kazanan = katilimcilar.random();
+                    
+                    // Kazananı Duyurma Embed'i Düzenleme
+                    msg.edit({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0x0000FF)
+                            .setTitle('🏆 ÇEKİLİŞ BİTTİ! 🏆')
+                            .setDescription(`**Ödül:** ${odul}\n**Kazanan:** ${kazanan} tebrikler!`)
+                            .setFooter({ text: `Çekilişi ${message.author.tag} başlattı.` })
+                            .setTimestamp()]
+                    });
+                    
+                    // Kanalda Kazananı Etiketleme
+                    message.channel.send(`🎉 Tebrikler, ${kazanan}! **${odul}** kazandın!`);
+
+                }).catch(e => {
+                    console.error('Çekiliş bitiş hatası:', e);
+                    message.channel.send('Çekiliş sonlandırma sırasında bir hata oluştu.');
+                });
+
+            }, sureMs); // Belirlenen süre sonunda çalış
+
+        }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
+    }
    
     // 18. KOMUT: !admin-yardim/admin-help
     else if (command === 'admin-yardim' || command === 'admin-help') {
