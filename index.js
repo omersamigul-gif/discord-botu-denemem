@@ -185,19 +185,19 @@ else if (command === 'ticket-setup') {
     message.delete(); // Kurulum komutunu silebiliriz
 }
 
-// 2. KOMUT: !zar
+// 3. KOMUT: !zar
 else if (command === 'zar') {
     const zar = Math.floor(Math.random() * 6) + 1; 
     message.channel.send(`${message.author.username}, zarın **${zar}** geldi!`);
 }
 
-    // 3. KOMUT: !ping 
+    // 4. KOMUT: !ping 
     else if (command === 'ping') {
         const latency = Math.round(client.ws.ping);
         message.channel.send(`Pong! Gecikme süresi: **${latency}ms.**`)
     }
     
-    // 4. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
+    // 5. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
     else if (command === 'sil') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
             return message.channel.send('Bu komutu kullanmak için **Mesajları Yönet** yetkisine sahip olmalısın.');
@@ -245,7 +245,7 @@ else if (command === 'zar') {
     }
 }
 
-    // 5. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
+    // 6. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
     else if (command === 'mute') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Denetle** yetkisine sahip olmalısın.');
@@ -305,7 +305,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 6. KOMUT: !kick @kullanıcı [sebep]
+    // 7. KOMUT: !kick @kullanıcı [sebep]
     else if (command === 'kick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Atma** yetkisine sahip olmalısın.');
@@ -342,7 +342,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 7. KOMUT: !ban @kullanıcı [sebep]
+    // 8. KOMUT: !ban @kullanıcı [sebep]
     else if (command === 'ban') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Yasakla** yetkisine sahip olmalısın.');
@@ -379,7 +379,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 8. KOMUT: !yardım (Tüm komutları gösterir)
+    // 9. KOMUT: !yardım (Tüm komutları gösterir)
     else if (command === 'yardim'|| command === 'help' || command === 'h' || command === 'y') {
         
         const helpEmbed = new EmbedBuilder()
@@ -408,7 +408,7 @@ else if (command === 'zar') {
         message.channel.send({ embeds: [helpEmbed] });
     }
     
-    // 9. KOMUT: !nick [@kullanıcı] [Yeni Ad]
+    // 10. KOMUT: !nick [@kullanıcı] [Yeni Ad]
     else if (command === 'nick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return message.channel.send('Bu komutu kullanmak için **Takma Adları Yönet** yetkisine sahip olmalısın.');
@@ -434,7 +434,7 @@ else if (command === 'zar') {
             });
     }
 
-    // 10. KOMUT: !rol @kullanıcı [Rol Adı]
+    // 11. KOMUT: !rol @kullanıcı [Rol Adı]
     else if (command === 'rol') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
             return message.channel.send('Bu komutu kullanmak için **Rolleri Yönet** yetkisine sahip olmalısın.');
@@ -487,7 +487,7 @@ else if (command === 'zar') {
         return;
     }
 
-// 11. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
+// 12. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
 else if (command === 'unmute') {
     // 1. İzin Kontrolü
     if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
@@ -533,7 +533,7 @@ else if (command === 'unmute') {
         message.channel.send(`${targetMember.user.tag} zaten susturulmamış.`);
     }
 }
-// 12. KOMUT: !sunucu (Temel Sunucu Bilgileri)
+// 13. KOMUT: !sunucu (Temel Sunucu Bilgileri)
 if (command === 'sunucu') {
         
         // Sunucu nesnesini güvenle al (Çünkü yukarıda kontrol ettik)
@@ -563,7 +563,7 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [serverEmbed] });
     }
 
-    // 13. KOMUT: !kullanıcı @kullanıcı
+    // 14. KOMUT: !kullanıcı @kullanıcı
     else if (command === 'kullanıcı' || command === 'kimim' ) {
         // Eğer bir kullanıcı etiketlenmişse onu alır, yoksa mesajı yazan kişiyi hedefler.
         const member = message.mentions.members.first() || message.member;
@@ -594,7 +594,7 @@ if (command === 'sunucu') {
         // Embed mesajını gönderme
         message.channel.send({ embeds: [userEmbed] });
     }
-    // 14. KOMUT: !gif-engelleme
+    // 15. KOMUT: !gif-engelleme
     else if (command === 'gif-engelleme') {
     
     // 1. İZİN KONTROLÜ
@@ -626,7 +626,7 @@ if (command === 'sunucu') {
     return message.channel.send({ embeds: [engellemeEmbed] });
 }
     
-    // 15. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
+    // 16. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
     else if (command === 'çekiliş' || command === 'cekilis') {
         
         // 1. İzin Kontrolü (Sunucuyu Yönet izni gerek)
@@ -682,8 +682,8 @@ if (command === 'sunucu') {
         const cekilisEmbed = new EmbedBuilder()
             .setColor(0x371d5d)
             .setTitle('🎉 ÇEKİLİŞ BAŞLADI! 🎉')
-            // DÜZELTİLDİ: SureMetni eklendi.
-            .setDescription(`**Ödül:** ${odul}\n**Süre:** ${sureMetni}\n**Bitiş:** <t:${bitisTimestamp}:R> (<t:${bitisTimestamp}:f>)\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
+            // BURADA DÜZELTİLDİ: Sadece net süre ve TAM bitiş zamanı (göreli zaman etiketi yok).
+            .setDescription(`**Ödül:** ${odul}\n**Süre:** ${sureMetni}\n**Bitiş:** <t:${bitisTimestamp}:f>\n\n**Katılım:** Aşağıdaki 🎉 reaksiyonuna tıkla!`)
             .setTimestamp()
             .setFooter({ text: `Başlatan: ${message.author.tag}` });
         
@@ -741,7 +741,7 @@ if (command === 'sunucu') {
         }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
     }
    
-    // 16. KOMUT: !admin-yardim/admin-help
+    // 17. KOMUT: !admin-yardim/admin-help
     else if (command === 'admin-yardim' || command === 'admin-help') {
 
         // Bu komutu herkesin değil, sadece Yönetici/Moderatör rolündekilerin görmesi daha uygundur.
