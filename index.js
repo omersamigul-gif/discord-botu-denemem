@@ -771,6 +771,57 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [adminHelpEmbed] });
     }
 
+    // 18. KOMUT: !kanal-kilitle #[kanal]
+    else if (command === 'kanal-kilitle' || command === 'lock') {
+        // 1. izin kontrolü
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+            return message.reply('Bu komudu kullanmak için **Kanalları Yönet** iznine sahip olmalısın.');
+    }
+
+        // 2. Hedef kanalı belirleme
+        const targetChannel = message.mentions.channels.first() || message.channel;
+
+        // @everyone rolünü al
+        const everyoneRole = message.guild.roles.everyone;
+        
+        // Şuanki izinleri al
+        const currentPermissions = targetChannel.permissionOverwrites.cache.get(everyoneRole.id);
+        // Mesaj Gönderme izninin şu anki durumunu kontrol et
+        // Eğer izinler ayarlanmamışsa varsayılan olarak null döner.
+        const isLocked = currentPermissions?.deny.has(PermissionsBitField.Flags.SendMessages) || false;
+        
+        let successMessage;
+        try {
+            if (isLocked) {
+                // Kilit açma işlemi
+            await targetChannel.permissionOverwrites.edit(everyoneRole, {
+                SendMessages: null // İzni sıfırla (varsayılana geri dön)
+            });
+            successMessage = `🔓 **#${targetChannel.name}** kanalının kilidi **açıldı**. Herkes tekrar mesaj gönderebilir.`;
+            } else {
+                // KİLİTLEME İŞLEMİ
+            await targetChannel.permissionOverwrites.edit(everyoneRole, {
+                SendMessages: false // Mesaj gönderme iznini Reddet
+            });
+            successMessage = `🔒 **#${targetChannel.name}** kanalı **kilitlendi**. Hiç kimse mesaj gönderemez.`;
+        }
+        // Başarı mesajı gönder
+        const lockEmbed = new EmbedBuilder()
+            .setColor(isLocked ? 0x00FF00 : 0xFF0000) // Açılırsa yeşil, kilitlenirse kırmızı
+            .setTitle('🚨 KANAL İZİN DEĞİŞİKLİĞİ')
+            .setDescription(successMessage)
+            .setTimestamp()
+            .setFooter({ text: `Yetkili: ${message.author.tag}` });
+            
+        message.channel.send({ embeds: [lockEmbed] });
+
+        // Komut mesajını sil
+        message.delete().catch(() => {});
+
+    } catch (error) {
+        console.error('Kanal kilitleme/açma hatası:', error);
+        message.reply('İzinleri ayarlarken bir hata oluştu. Botun rol hiyerarşisinin kanallardan yüksek olduğundan emin olun.');
+    }    
 }); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
