@@ -771,41 +771,45 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [adminHelpEmbed] });
     }
 
-    // 18. KOMUT: !kanal-kilitle #[kanal]
-    else if (command === 'kanal-kilitle' || command === 'lock') {
-        // 1. izin kontrolü
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
-            return message.reply('Bu komudu kullanmak için **Kanalları Yönet** iznine sahip olmalısın.');
+    // 17. KOMUT: !kanal-kilitle #[kanal]
+else if (command === 'kanal-kilitle' || command === 'lock') {
+
+    // 1. İzin Kontrolü (Kanalları Yönet izni gerek)
+    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+        return message.reply('Bu komutu kullanmak için **Kanalları Yönet** yetkisine sahip olmalısın.');
     }
 
-        // 2. Hedef kanalı belirleme
-        const targetChannel = message.mentions.channels.first() || message.channel;
+    // 2. Hedef Kanalı Belirle (Etiketlenmiş kanal yoksa, komutun yazıldığı kanalı kullan)
+    const targetChannel = message.mentions.channels.first() || message.channel;
+    
+    // @everyone rolünü al
+    const everyoneRole = message.guild.roles.everyone;
 
-        // @everyone rolünü al
-        const everyoneRole = message.guild.roles.everyone;
-        
-        // Şuanki izinleri al
-        const currentPermissions = targetChannel.permissionOverwrites.cache.get(everyoneRole.id);
-        // Mesaj Gönderme izninin şu anki durumunu kontrol et
-        // Eğer izinler ayarlanmamışsa varsayılan olarak null döner.
-        const isLocked = currentPermissions?.deny.has(PermissionsBitField.Flags.SendMessages) || false;
-        
-        let successMessage;
-        try {
-            if (isLocked) {
-                // Kilit açma işlemi
+    // Şu anki izinleri al
+    const currentPermissions = targetChannel.permissionOverwrites.cache.get(everyoneRole.id);
+    
+    // Mesaj Gönderme izninin şu anki durumunu kontrol et
+    const isLocked = currentPermissions?.deny.has(PermissionsBitField.Flags.SendMessages) || false;
+
+    let successMessage;
+
+    try {
+        if (isLocked) {
+            // KİLİT AÇMA İŞLEMİ
             await targetChannel.permissionOverwrites.edit(everyoneRole, {
                 SendMessages: null // İzni sıfırla (varsayılana geri dön)
             });
             successMessage = `🔓 **#${targetChannel.name}** kanalının kilidi **açıldı**. Herkes tekrar mesaj gönderebilir.`;
-            } else {
-                // KİLİTLEME İŞLEMİ
+
+        } else {
+            // KİLİTLEME İŞLEMİ
             await targetChannel.permissionOverwrites.edit(everyoneRole, {
                 SendMessages: false // Mesaj gönderme iznini Reddet
             });
             successMessage = `🔒 **#${targetChannel.name}** kanalı **kilitlendi**. Hiç kimse mesaj gönderemez.`;
         }
-        // Başarı mesajı gönder
+
+        // 1. İŞLEM KANALINA BİLDİRİM
         const lockEmbed = new EmbedBuilder()
             .setColor(isLocked ? 0x00FF00 : 0xFF0000) // Açılırsa yeşil, kilitlenirse kırmızı
             .setTitle('🚨 KANAL İZİN DEĞİŞİKLİĞİ')
@@ -815,14 +819,81 @@ if (command === 'sunucu') {
             
         message.channel.send({ embeds: [lockEmbed] });
 
+        // 2. LOG KAYDI OLUŞTURMA (YENİ EKLENEN KISIM)
+        const actionType = isLocked ? 'KİLİDİ AÇILDI' : 'KİLİTLENDİ';
+        const logColor = isLocked ? 0x00FF00 : 0xFF0000;
+        
+        const logEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle(`🔒 KANAL ${actionType}`)
+            .addFields(
+                { name: 'Kanal', value: `#${targetChannel.name}`, inline: true },
+                { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: true },
+                { name: 'Eylem', value: actionType, inline: false }
+            )
+            .setTimestamp();
+            
+        await sendLog(logEmbed); // Logu Log Kanalına gönder
+
         // Komut mesajını sil
         message.delete().catch(() => {});
 
     } catch (error) {
         console.error('Kanal kilitleme/açma hatası:', error);
         message.reply('İzinleri ayarlarken bir hata oluştu. Botun rol hiyerarşisinin kanallardan yüksek olduğundan emin olun.');
-    }    
-}); // <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
+    }
+}
+        // 19. KOMUT: !unban [Kullanıcı ID'si]
+        else if (command === 'unban') {
+
+    // 1. İzin Kontrolü (Üyeleri Yasakla izni gerek)
+    if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
+        return message.reply('Bu komutu kullanmak için **Üyeleri Yasaklama** yetkisine sahip olmalısın.');
+    }
+
+    // 2. Argüman Kontrolü (ID veya Etiket)
+    const userId = args[0];
+    if (!userId) {
+        return message.reply('Lütfen yasağı kaldırılacak kullanıcının ID\'sini veya etiketini girin.');
+    }
+
+    const reason = args.slice(1).join(' ') || 'Sebep belirtilmedi.';
+
+    try {
+        // 3. Yasağı Kaldırma İşlemi
+        // fetchBan, kullanıcının yasaklı olup olmadığını kontrol eder
+        await message.guild.bans.fetch(userId); // Yasaklı kullanıcıyı bul
+        await message.guild.bans.remove(userId, reason); // Yasağı kaldır
+
+        // 4. Başarı Mesajı
+        const unbanEmbed = new EmbedBuilder()
+            .setColor(0x371d5d)
+            .setTitle('✅ KULLANICI YASAĞI KALDIRILDI (UNBAN)')
+            .addFields(
+                { name: 'Kullanıcı ID', value: userId, inline: true },
+                { name: 'Yetkili', value: `${message.author.tag}`, inline: true },
+                { name: 'Sebep', value: reason, inline: false }
+            )
+            .setTimestamp();
+        
+        message.channel.send({ embeds: [unbanEmbed] });
+
+        // Komut mesajını sil
+        message.delete().catch(() => {});
+
+        // Loglama (Daha önce tanımlanan sendLog fonksiyonunu kullanır)
+        await sendLog(unbanEmbed);
+
+    } catch (error) {
+        // Eğer kullanıcı yasaklı değilse veya ID hatalıysa
+        if (error.code === 10026 || error.code === 50013) {
+             return message.reply(`Hata: **${userId}** ID'li kullanıcı bu sunucuda yasaklı değil veya ID hatalı.`);
+        }
+        console.error("UNBAN HATASI:", error);
+        message.reply('Yasağı kaldırma sırasında bir hata oluştu: ' + error.message);
+    }
+}
+});// <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
 // Düğme etkileşimlerini dinlemek için event listener
