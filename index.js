@@ -80,7 +80,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!h | v2.1', type: 0 } // Oynuyor
+      { name: '!h | v2.2', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -764,6 +764,8 @@ if (command === 'sunucu') {
                 { name: '`!nick @kullanıcı [Yeni Ad]`', value: 'Takma ad değiştirir (**Takma Adları Yönet**).', inline: true },
                 { name: '`!rol @kullanıcı @[Rol Adı]`', value: 'Kullanıcıya rol verir (**Rolleri Yönet**).', inline: true },
                 { name: '`!gif-engelleme #[kanal]`', value: 'Belirtilen kanalda GIF silmeyi aç/kapat (**Yönetici**).', inline: true},
+                { name: '`!kanal-kilitle #[kanal]`', value: 'Belirtilen kanalı kilitle/aç (**Kanalları Yönet**).', inline: true },
+                { name: '`!unban [Kullanıcı ID\'si]`', value: 'Belirtilen kullanıcının yasağını kaldırır (**Üyeleri Yasakla**).', inline: true }
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
