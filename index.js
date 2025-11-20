@@ -92,7 +92,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!h | v2.2', type: 0 } // Oynuyor
+      { name: '!h | v3.0', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -408,6 +408,7 @@ else if (command === 'zar') {
                 { name: '`!ping`', value: 'Botun gecikme süresini gösterir.', inline: true },
                 { name: '`!sunucu`', value: 'Sunucu hakkında temel bilgileri gösterir.', inline: true },
                 { name: '`!y/!h/!yardim`', value: 'Bu yardım menüsünü gösterir.', inline: true },
+                { name: '`!botlink`', value: 'Botun davet linkini gönderir.', inline: true },
                 { name: '`!admin-yardim/!admin-help`', value: 'Moderasyon komutlarını gösterir. (Bu komutu kullanmak için en az **Mesajları Yönet** yetkisine sahip olmalısın.)', inline: true },
                 // Sosyal ve etkileşim komutları
                 { name: '\n✨ Sosyal & Etkileşim Komutları', value: '-------------------------------', inline: false },
@@ -778,7 +779,8 @@ if (command === 'sunucu') {
                 { name: '`!gif-engelleme #[kanal]`', value: 'Belirtilen kanalda GIF silmeyi aç/kapat (**Yönetici**).', inline: true},
                 { name: '`!kanal-kilitle #[kanal]`', value: 'Belirtilen kanalı kilitle/aç (**Kanalları Yönet**).', inline: true },
                 { name: '`!unban [Kullanıcı ID\'si]`', value: 'Belirtilen kullanıcının yasağını kaldırır (**Üyeleri Yasakla**).', inline: true},
-                { name: '`!ticket-setup`', value: 'Yazılan kanalda destek bileti (ticket) sistemini kurar (**Yönetici**).', inline: true }
+                { name: '`!ticket-setup`', value: 'Yazılan kanalda destek bileti (ticket) sistemini kurar (**Yönetici**).', inline: true },
+                { name: '`!log #[kanal]`', value: 'Log kanalını ayarlar (**Yönetici**).', inline: true }
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
