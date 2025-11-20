@@ -897,6 +897,28 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
         message.reply('Yasağı kaldırma sırasında bir hata oluştu: ' + error.message);
     }
 }
+
+    // 20. komut: !botlink
+    else if (command === 'botlink' || command === 'invite-link') {
+        const clientId = client.user.id;
+        const permissions = 8; // Yönetici izni
+        const invitelink = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=bot`;
+        // Embed oluşturma
+        const linkEmbed = new EmbedBuilder()
+        .setColor(0x371d5d)
+        .setTitle('🔗 botu sunucuna ekle!')
+        .setDescription('Aşağıdaki linkle botu kendi sunucuna ekleyebilirsin! (Bot, yönetici izniyle davet edilir.)')
+        .addFields(
+            { name: 'Davet Linki', value: `[Bana Tıkla ve Sunucuna Ekle!](${inviteLink})`, inline: false }
+        )
+        .setThumbnail(client.user.displayAvatarURL())
+        .setTimestamp();
+        
+    message.channel.send({ embeds: [linkEmbed] });
+
+    // Komut mesajını sil
+    message.delete().catch(() => {});
+}
 });// <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 
