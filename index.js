@@ -912,25 +912,35 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
 }
 
     // 20. komut: !botlink
-    else if (command === 'botlink' || command === 'invite-link') {
-        const clientId = client.user.id;
-        const permissions = 8; // Yönetici izni
-        const invitelink = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=bot`;
-        // Embed oluşturma
-        const linkEmbed = new EmbedBuilder()
+    else if (command === 'botlink') {
+    
+    // Botun ID'sini ve istenen izinleri al
+    const clientId = client.user.id;
+    const permissions = '8'; // Yönetici (Administrator) izni kodu.
+
+    // Davet linkini oluştur
+    const inviteLink = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=bot`;
+
+    // Embed oluştur
+    const linkEmbed = new EmbedBuilder()
         .setColor(0x371d5d)
-        .setTitle('🔗 botu sunucuna ekle!')
-        .setDescription('Aşağıdaki linkle botu kendi sunucuna ekleyebilirsin! (Bot, yönetici izniyle davet edilir.)')
+        .setTitle('🔗 BOTU SUNUCUNA EKLE!')
+        .setDescription('メッド#4452 botunu kendi sunucuna davet etmek için aşağıdaki linki kullanabilirsin. Bot, yönetici izniyle davet edilir.')
         .addFields(
             { name: 'Davet Linki', value: `[Bana Tıkla ve Sunucuna Ekle!](${inviteLink})`, inline: false }
         )
         .setThumbnail(client.user.displayAvatarURL())
         .setTimestamp();
         
+    // Embed'i gönderme
     message.channel.send({ embeds: [linkEmbed] });
 
     // Komut mesajını sil
-    message.delete().catch(() => {});
+    try {
+        await message.delete();
+    } catch (e) {
+        console.error('!botlink komut mesajı silinemedi.');
+    }
 }
 
     // 21. komut: !log #[kanal]
