@@ -37,15 +37,26 @@ function keepAlive() {
 // Botu başlatmadan hemen önce bu fonksiyonu çağır
 keepAlive();
 
-// LOG KANALININ ID'sini buraya GİRİN!
-// Bu ID'yi kendi log kanalınızın ID'siyle değiştirin.
-const GUILD_LOG_CHANNELS = {
-    '1370070679105306695': '1376137436391804938',
-    '1259887540865990738': '1274334627686781020',
-    '1424304238254624879': '1430227407930916936',
-    '1436764970997252098': '1437540065529299078',
-    // Gerekirse daha fazla sunucu ve log kanalı ekle
-};
+const fs = require('fs'); // Dosya okuma/yazma modülünü ekle
+
+// Log kanalı verilerini log.json dosyasından yükle
+let GUILD_LOG_CHANNELS = {}; 
+try {
+    const data = fs.readFileSync('./log.json', 'utf8');
+    GUILD_LOG_CHANNELS = JSON.parse(data);
+} catch (e) {
+    console.error('log.json okunamadı veya bulunamadı. Boş Log Objesi ile başlanıyor.');
+}
+
+// Log kanalı verilerini log.json dosyasına kalıcı olarak kaydetme fonksiyonu
+function saveLogChannels() {
+    try {
+        // Veriyi güzelleştirerek (null, 4) kaydet
+        fs.writeFileSync('./log.json', JSON.stringify(GUILD_LOG_CHANNELS, null, 4));
+    } catch (e) {
+        console.error('Log kanalı verileri log.json dosyasına yazılamadı:', e);
+    }
+}
 
 
 // Tokeni .env dosyasından güvenli bir şekilde çeker
@@ -186,19 +197,19 @@ else if (command === 'ticket-setup') {
     message.delete(); // Kurulum komutunu silebiliriz
 }
 
-// 3. KOMUT: !zar
+// 2. KOMUT: !zar
 else if (command === 'zar') {
     const zar = Math.floor(Math.random() * 6) + 1; 
     message.channel.send(`${message.author.username}, zarın **${zar}** geldi!`);
 }
 
-    // 4. KOMUT: !ping 
+    // 3. KOMUT: !ping 
     else if (command === 'ping') {
         const latency = Math.round(client.ws.ping);
         message.channel.send(`Pong! Gecikme süresi: **${latency}ms.**`)
     }
     
-    // 5. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
+    // 4. KOMUT: !sil [miktar] - LOG SİSTEMİ EKLENDİ
     else if (command === 'sil') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
             return message.channel.send('Bu komutu kullanmak için **Mesajları Yönet** yetkisine sahip olmalısın.');
@@ -246,7 +257,7 @@ else if (command === 'zar') {
     }
 }
 
-    // 6. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
+    // 5. KOMUT: !mute @kullanıcı [süre] (TIMEOUT KULLANIR)
     else if (command === 'mute') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Denetle** yetkisine sahip olmalısın.');
@@ -306,7 +317,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 7. KOMUT: !kick @kullanıcı [sebep]
+    // 6. KOMUT: !kick @kullanıcı [sebep]
     else if (command === 'kick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Atma** yetkisine sahip olmalısın.');
@@ -343,7 +354,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 8. KOMUT: !ban @kullanıcı [sebep]
+    // 7. KOMUT: !ban @kullanıcı [sebep]
     else if (command === 'ban') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
             return message.channel.send('Bu komutu kullanmak için **Üyeleri Yasakla** yetkisine sahip olmalısın.');
@@ -380,7 +391,7 @@ else if (command === 'zar') {
         }
     }
 
-    // 9. KOMUT: !yardım (Tüm komutları gösterir)
+    // 8. KOMUT: !yardım (Tüm komutları gösterir)
     else if (command === 'yardim'|| command === 'help' || command === 'h' || command === 'y') {
         
         const helpEmbed = new EmbedBuilder()
@@ -409,7 +420,7 @@ else if (command === 'zar') {
         message.channel.send({ embeds: [helpEmbed] });
     }
     
-    // 10. KOMUT: !nick [@kullanıcı] [Yeni Ad]
+    // 9. KOMUT: !nick [@kullanıcı] [Yeni Ad]
     else if (command === 'nick') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
             return message.channel.send('Bu komutu kullanmak için **Takma Adları Yönet** yetkisine sahip olmalısın.');
@@ -435,7 +446,7 @@ else if (command === 'zar') {
             });
     }
 
-    // 11. KOMUT: !rol @kullanıcı [Rol Adı]
+    // 10. KOMUT: !rol @kullanıcı [Rol Adı]
     else if (command === 'rol') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
             return message.channel.send('Bu komutu kullanmak için **Rolleri Yönet** yetkisine sahip olmalısın.');
@@ -488,7 +499,7 @@ else if (command === 'zar') {
         return;
     }
 
-// 12. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
+// 11. KOMUT: !unmute @kullanıcı (TIMEOUT SIFIRLAR)
 else if (command === 'unmute') {
     // 1. İzin Kontrolü
     if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
@@ -534,7 +545,7 @@ else if (command === 'unmute') {
         message.channel.send(`${targetMember.user.tag} zaten susturulmamış.`);
     }
 }
-// 13. KOMUT: !sunucu (Temel Sunucu Bilgileri)
+// 12. KOMUT: !sunucu (Temel Sunucu Bilgileri)
 if (command === 'sunucu') {
         
         // Sunucu nesnesini güvenle al (Çünkü yukarıda kontrol ettik)
@@ -564,7 +575,7 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [serverEmbed] });
     }
 
-    // 14. KOMUT: !kullanıcı @kullanıcı
+    // 13. KOMUT: !kullanıcı @kullanıcı
     else if (command === 'kullanıcı' || command === 'kimim' ) {
         // Eğer bir kullanıcı etiketlenmişse onu alır, yoksa mesajı yazan kişiyi hedefler.
         const member = message.mentions.members.first() || message.member;
@@ -595,7 +606,7 @@ if (command === 'sunucu') {
         // Embed mesajını gönderme
         message.channel.send({ embeds: [userEmbed] });
     }
-    // 15. KOMUT: !gif-engelleme
+    // 14. KOMUT: !gif-engelleme
     else if (command === 'gif-engelleme') {
     
     // 1. İZİN KONTROLÜ
@@ -627,7 +638,7 @@ if (command === 'sunucu') {
     return message.channel.send({ embeds: [engellemeEmbed] });
 }
     
-    // 16. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
+    // 15. KOMUT: !çekiliş (SÜRELİ VE OTOMATİK BİTEN VERSİYON)
     else if (command === 'çekiliş' || command === 'cekilis') {
         
         // 1. İzin Kontrolü (Sunucuyu Yönet izni gerek)
@@ -742,7 +753,7 @@ if (command === 'sunucu') {
         }).catch(e => console.error('Çekiliş başlangıç hatası:', e));
     }
    
-    // 17. KOMUT: !admin-yardim/admin-help
+    // 16. KOMUT: !admin-yardim/admin-help
     else if (command === 'admin-yardim' || command === 'admin-help') {
 
         // Bu komutu herkesin değil, sadece Yönetici/Moderatör rolündekilerin görmesi daha uygundur.
@@ -775,7 +786,7 @@ if (command === 'sunucu') {
         message.channel.send({ embeds: [adminHelpEmbed] });
     }
 
-    // 17. KOMUT: !kanal-kilitle #[kanal]
+    // 18. KOMUT: !kanal-kilitle #[kanal]
 else if (command === 'kanal-kilitle' || command === 'lock') {
 
     // 1. İzin Kontrolü (Kanalları Yönet izni gerek)
@@ -915,6 +926,47 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
         .setTimestamp();
         
     message.channel.send({ embeds: [linkEmbed] });
+
+    // Komut mesajını sil
+    message.delete().catch(() => {});
+}
+
+    // 21. komut: !log #[kanal]
+    else if (command === 'log') {
+    
+    // 1. İzin Kontrolü (Sadece Yönetici izni)
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return message.reply('Bu komutu kullanmak için **Yönetici** yetkisine sahip olmalısın.');
+    }
+
+    // 2. Hedef Kanalı Belirle
+    const newLogChannel = message.mentions.channels.first();
+
+    if (!newLogChannel || newLogChannel.type !== ChannelType.GuildText) {
+        return message.reply('Lütfen log kanalı olarak ayarlanacak geçerli bir metin kanalı etiketleyin. Örn: `!log #sunucu-log`');
+    }
+    
+    // 3. Başarı Mesajı ve KAYDETME İŞLEMİ
+    const guildId = message.guild.id;
+    const logChannelId = newLogChannel.id;
+
+    // VERİYİ IN-MEMORY (RAM) ÜZERİNDE GÜNCELLE
+    GUILD_LOG_CHANNELS[guildId] = logChannelId;
+    
+    // VERİYİ DOSYAYA KALICI OLARAK KAYDET
+    saveLogChannels(); 
+    
+    const logEmbed = new EmbedBuilder()
+        .setColor(0x371d5d)
+        .setTitle('✅ LOG KANALI KALICI OLARAK AYARLANDI')
+        .setDescription(`Bundan sonra sunucu logları **#${newLogChannel.name}** kanalına gönderilecektir.`)
+        .addFields(
+            { name: 'Kanal ID', value: logChannelId, inline: false }
+        )
+        .setTimestamp()
+        .setFooter({ text: `Yetkili: ${message.author.tag}` });
+        
+    message.channel.send({ embeds: [logEmbed] });
 
     // Komut mesajını sil
     message.delete().catch(() => {});
