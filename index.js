@@ -127,7 +127,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!h | v3.0', type: 0 } // Oynuyor
+      { name: '!h | v3.1', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
@@ -146,17 +146,13 @@ client.on('messageCreate', async message => {
     // Eğer sunucunun prefix'i yoksa varsayılanı kullan
     const prefix = GUILD_PREFIXES[guildId] || DEFAULT_PREFIX; 
 
-    // Eğer mesaj prefix ile başlamıyorsa, yoksay.
-    if (!message.content.startsWith(prefix)) return;
+    // 🚨 HATA DÜZELTME: channelId'yi burada tanımlıyoruz
+    const channelId = message.channel.id; 
 
-    // Komut ve argümanları ayırma
-    const args = message.content.slice(prefix.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
-    
-    // Artık channelId'yi kontrol ediyoruz
+    // 🚨 MANTIK DÜZELTMESİ: GIF kontrolünü, prefix kontrolünden önceye taşıdık
     if (gifEngellemeDurumu.get(channelId)) { 
         
-        // GÜÇLENDİRİLMİŞ GIF KONTROLÜ (Aynı kalacak)
+        // GÜÇLENDİRİLMİŞ GIF KONTROLÜ
         const content = message.content.toLowerCase();
         
         const isGif = 
@@ -174,10 +170,17 @@ client.on('messageCreate', async message => {
                                        .then(m => setTimeout(() => m.delete().catch(() => {}), 5000)); 
                     })
                     .catch(e => console.error('GIF silme hatası:', e));
-                return; 
+                return; // GIF mesajıydı, bu yüzden komut işlemeye devam etme
             }
         }
     }
+
+    // Eğer mesaj prefix ile başlamıyorsa, yoksay. (GIF kontrolünden sonra)
+    if (!message.content.startsWith(prefix)) return;
+
+    // Komut ve argümanları ayırma
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
     
     // --- Yardımcı fonksiyon: Loglama ---
 const sendLog = async (embed) => {
@@ -816,7 +819,9 @@ if (command === 'sunucu') {
                 { name: '`!kanal-kilitle #[kanal]`', value: 'Belirtilen kanalı kilitle/aç (**Kanalları Yönet**).', inline: true },
                 { name: '`!unban [Kullanıcı ID\'si]`', value: 'Belirtilen kullanıcının yasağını kaldırır (**Üyeleri Yasakla**).', inline: true},
                 { name: '`!ticket-setup`', value: 'Yazılan kanalda destek bileti (ticket) sistemini kurar (**Yönetici**).', inline: true },
-                { name: '`!log #[kanal]`', value: 'Log kanalını ayarlar (**Yönetici**).', inline: true }
+                { name: '`!log #[kanal]`', value: 'Log kanalını ayarlar (**Yönetici**).', inline: true },
+                { name: '`!prefix`', value: 'Prefixi değiştirir (**Yönetici**).', inline: true },
+                { name: '`!gelen-giden`', value: 'Gelen-giden mesajlarını açar/kapatır (**Yönetici**).', inline: true }
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
