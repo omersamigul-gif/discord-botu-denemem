@@ -59,6 +59,41 @@ function saveLogChannels() {
 }
 
 
+// ---------------------- PREFIX AYARLARI ----------------------
+let GUILD_PREFIXES = {};
+const DEFAULT_PREFIX = '!'; // Varsayılan Prefix
+try {
+    const data = fs.readFileSync('./prefix.json', 'utf8');
+    GUILD_PREFIXES = JSON.parse(data);
+} catch (e) {
+    console.log('prefix.json bulunamadı. Varsayılan prefix (!) kullanılıyor.');
+}
+
+function savePrefixes() {
+    try {
+        fs.writeFileSync('./prefix.json', JSON.stringify(GUILD_PREFIXES, null, 4));
+    } catch (e) {
+        console.error('Prefix verileri prefix.json dosyasına yazılamadı:', e);
+    }
+}
+
+// ---------------------- GENEL SUNUCU AYARLARI (Gelen/Giden İçin) ----------------------
+let GUILD_SETTINGS = {};
+try {
+    const data = fs.readFileSync('./settings.json', 'utf8');
+    GUILD_SETTINGS = JSON.parse(data);
+} catch (e) {
+    console.log('settings.json bulunamadı. Boş ayar objesi ile başlanıyor.');
+}
+
+function saveSettings() {
+    try {
+        fs.writeFileSync('./settings.json', JSON.stringify(GUILD_SETTINGS, null, 4));
+    } catch (e) {
+        console.error('Sunucu ayarları settings.json dosyasına yazılamadı:', e);
+    }
+}
+
 // Tokeni .env dosyasından güvenli bir şekilde çeker
 const BOT_TOKEN = process.env.DISCORD_TOKEN; 
 
@@ -103,11 +138,21 @@ client.once('clientReady', () => {
 const prefix = '!';
 
 client.on('messageCreate', async message => {
-                           
-    if (message.author.bot || !message.guild) return;
+    // Botun kendisini veya diğer botları dinleme
+    if (message.author.bot) return;
 
-    const channelId = message.channel.id; // Mesajın geldiği kanalın ID'sini al
+    // SUNUCUYA ÖZEL PREFIX BELİRLEME
+    const guildId = message.guild.id;
+    // Eğer sunucunun prefix'i yoksa varsayılanı kullan
+    const prefix = GUILD_PREFIXES[guildId] || DEFAULT_PREFIX; 
 
+    // Eğer mesaj prefix ile başlamıyorsa, yoksay.
+    if (!message.content.startsWith(prefix)) return;
+
+    // Komut ve argümanları ayırma
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+    
     // Artık channelId'yi kontrol ediyoruz
     if (gifEngellemeDurumu.get(channelId)) { 
         
@@ -133,15 +178,6 @@ client.on('messageCreate', async message => {
             }
         }
     }
-
-    if (message.author.bot || !message.content.startsWith(prefix)) return;
-
-    if (!message.guild) return;
-
-    if (!message.content.startsWith(prefix) || message.author.bot) return;
-
-    const args = message.content.slice(prefix.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
     
     // --- Yardımcı fonksiyon: Loglama ---
 const sendLog = async (embed) => {
@@ -983,8 +1019,143 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
     // Komut mesajını sil
     message.delete().catch(() => {});
 }
+
+    // 22. KOMUT: !prefix [yeni prefix]
+    else if (command === 'prefix') {
+    
+    // Yöneticilik izni kontrolü
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return message.reply('Bu komutu kullanmak için **Yönetici** yetkisine sahip olmalısın.');
+    }
+
+    const newPrefix = args[0];
+
+    if (!newPrefix) {
+        // Kullanıcıya mevcut prefix'i ve kullanım şeklini göster.
+        return message.reply(`Lütfen yeni bir prefix girin. Örn: \`${prefix}prefix !\` veya \`${prefix}prefix $\`. Mevcut prefix: **${prefix}**`);
+    }
+
+    if (newPrefix.length > 5) {
+        return message.reply('Prefix en fazla 5 karakter olabilir.');
+    }
+
+    // Prefix'i güncelle ve kaydet
+    GUILD_PREFIXES[message.guild.id] = newPrefix;
+    savePrefixes();
+
+    const prefixEmbed = new EmbedBuilder()
+        .setColor(0x371d5d)
+        .setTitle('✅ PREFIX GÜNCELLENDİ')
+        .setDescription(`Sunucunun yeni komut prefixi **\`${newPrefix}\`** olarak ayarlandı.`)
+        .setTimestamp()
+        .setFooter({ text: `Yetkili: ${message.author.tag}` });
+        
+    message.channel.send({ embeds: [prefixEmbed] });
+    message.delete().catch(() => {});
+}
+
+    // 22. KOMUT: !gelen-giden #[kanal]
+else if (command === 'gelen-giden' || command === 'welcome-channel') {
+    
+    // Yöneticilik izni kontrolü
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return message.reply('Bu komutu kullanmak için **Yönetici** yetkisine sahip olmalısın.');
+    }
+
+    const newChannel = message.mentions.channels.first();
+    const subCommand = args[0] ? args[0].toLowerCase() : null;
+
+    if (!newChannel) {
+        // Eğer etiketleme yapılmadıysa ve sıfırlama komutu varsa
+        if (subCommand === 'kapat' || subCommand === 'sıfırla') {
+            // Ayarı sil
+            if (GUILD_SETTINGS[message.guild.id]) {
+                delete GUILD_SETTINGS[message.guild.id].welcomeChannel;
+                saveSettings();
+                return message.reply('👋 Gelen/Giden mesaj kanalı ayarı **sıfırlandı**. Yeni üyeler için mesaj gönderilmeyecektir.');
+            } else {
+                return message.reply('Zaten ayarlanmış bir gelen/giden kanalı yok.');
+            }
+        }
+        return message.reply('Lütfen gelen/giden mesajlarının gönderileceği bir metin kanalı etiketleyin. Örn: `!gelen-giden #hoş-geldiniz`');
+    }
+    
+    // Geçerli bir metin kanalı mı kontrolü
+    if (newChannel.type !== ChannelType.GuildText) {
+        return message.reply('Lütfen geçerli bir metin kanalı etiketleyin.');
+    }
+
+    // Ayarı güncelle ve kaydet
+    if (!GUILD_SETTINGS[message.guild.id]) {
+        GUILD_SETTINGS[message.guild.id] = {};
+    }
+    GUILD_SETTINGS[message.guild.id].welcomeChannel = newChannel.id;
+    saveSettings();
+
+    const welcomeEmbed = new EmbedBuilder()
+        .setColor(0x371d5d)
+        .setTitle('👋 GELEN/GİDEN KANALI AYARLANDI')
+        .setDescription(`Yeni üyeler için karşılama ve ayrılan üyeler için veda mesajları artık **#${newChannel.name}** kanalına gönderilecektir.`)
+        .setTimestamp()
+        .setFooter({ text: `Yetkili: ${message.author.tag}` });
+        
+    message.channel.send({ embeds: [welcomeEmbed] });
+    message.delete().catch(() => {});
+}
 });// <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
+// YENİ EVENT: Sunucuya üye katıldığında
+client.on('guildMemberAdd', member => {
+    const guildId = member.guild.id;
+    const settings = GUILD_SETTINGS[guildId];
+
+    // Ayar yapılmış mı kontrol et
+    if (settings && settings.welcomeChannel) {
+        const channelId = settings.welcomeChannel;
+        const channel = member.guild.channels.cache.get(channelId);
+
+        if (channel) {
+            const welcomeEmbed = new EmbedBuilder()
+                .setColor(0x371d5d)
+                .setTitle('👋 HOŞ GELDİNİZ!')
+                .setDescription(`**${member.user.tag}**, sunucumuza hoş geldin! Seni aramızda görmekten mutluluk duyuyoruz.`)
+                .setThumbnail(member.user.displayAvatarURL())
+                .addFields(
+                    { name: 'Üye Sayısı', value: `${member.guild.memberCount}`, inline: true }
+                )
+                .setTimestamp();
+
+            // Etiketlemeden sonra mesajı gönder
+            channel.send({ content: `<@${member.user.id}>`, embeds: [welcomeEmbed] }).catch(console.error);
+        }
+    }
+});
+
+// YENİ EVENT: Sunucudan üye ayrıldığında
+client.on('guildMemberRemove', member => {
+    const guildId = member.guild.id;
+    const settings = GUILD_SETTINGS[guildId];
+
+    // Ayar yapılmış mı kontrol et
+    if (settings && settings.welcomeChannel) {
+        const channelId = settings.welcomeChannel;
+        const channel = member.guild.channels.cache.get(channelId);
+
+        if (channel) {
+            const farewellEmbed = new EmbedBuilder()
+                .setColor(0x371d5d)
+                .setTitle('🚶 VEDA VAKTİ')
+                .setDescription(`**${member.user.tag}** aramızdan ayrıldı. Görüşmek üzere!`)
+                .setThumbnail(member.user.displayAvatarURL())
+                .addFields(
+                    { name: 'Kalan Üye Sayısı', value: `${member.guild.memberCount}`, inline: true }
+                )
+                .setTimestamp();
+
+            channel.send({ embeds: [farewellEmbed] }).catch(console.error);
+        }
+    }
+});
 
 // Düğme etkileşimlerini dinlemek için event listener
 client.on('interactionCreate', async interaction => {
