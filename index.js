@@ -1025,8 +1025,8 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
     message.delete().catch(() => {});
 }
 
-    // 22. KOMUT: !prefix [yeni prefix]
-    else if (command === 'prefix') {
+    // 21. KOMUT: !prefix [Yeni Prefix]
+else if (command === 'prefix') {
     
     // Yöneticilik izni kontrolü
     if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
@@ -1043,19 +1043,37 @@ else if (command === 'kanal-kilitle' || command === 'lock') {
     if (newPrefix.length > 5) {
         return message.reply('Prefix en fazla 5 karakter olabilir.');
     }
+    
+    const oldPrefix = GUILD_PREFIXES[message.guild.id] || DEFAULT_PREFIX;
 
     // Prefix'i güncelle ve kaydet
     GUILD_PREFIXES[message.guild.id] = newPrefix;
     savePrefixes();
 
+    // 1. İşlem Kanalına Bildirim Embed'i
     const prefixEmbed = new EmbedBuilder()
         .setColor(0x371d5d)
         .setTitle('✅ PREFIX GÜNCELLENDİ')
-        .setDescription(`Sunucunun yeni komut prefixi **\`${newPrefix}\`** olarak ayarlandı.`)
+        .setDescription(`Sunucunun komut prefixi **\`${oldPrefix}\`** 'den **\`${newPrefix}\`** 'e ayarlandı.`)
         .setTimestamp()
         .setFooter({ text: `Yetkili: ${message.author.tag}` });
         
     message.channel.send({ embeds: [prefixEmbed] });
+    
+    // 2. LOG KAYDI OLUŞTURMA
+    const logEmbed = new EmbedBuilder()
+        .setColor(0x371d5d) // Turuncu renk (Uyarı/Ayarlar için)
+        .setTitle('⚙️ SUNUCU AYARI DEĞİŞTİ')
+        .addFields(
+            { name: 'Eylem', value: 'Prefix Güncelleme', inline: false },
+            { name: 'Eski Prefix', value: `\`${oldPrefix}\``, inline: true },
+            { name: 'Yeni Prefix', value: `\`${newPrefix}\``, inline: true },
+            { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: false }
+        )
+        .setTimestamp();
+        
+    await sendLog(logEmbed); // Logu Log Kanalına gönder
+
     message.delete().catch(() => {});
 }
 
