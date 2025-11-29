@@ -773,7 +773,7 @@ if (command === 'sunucu') {
                     // Kazananı Duyurma Embed'i Düzenleme
                     msg.edit({
                         embeds: [new EmbedBuilder()
-                            .setColor(0x0000FF)
+                            .setColor(0x371d5d)
                             .setTitle('🏆 ÇEKİLİŞ BİTTİ! 🏆')
                             .setDescription(`**Ödül:** ${odul}\n**Kazanan:** ${kazanan} tebrikler!`)
                             .setFooter({ text: `Çekilişi ${message.author.tag} başlattı.` })
