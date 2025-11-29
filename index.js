@@ -758,7 +758,7 @@ if (command === 'sunucu') {
                         // Yeterli katılımcı yoksa
                         msg.edit({
                             embeds: [new EmbedBuilder()
-                                .setColor(0xFF0000)
+                                .setColor(0x371d5d)
                                 .setTitle('🚫 ÇEKİLİŞ BİTTİ!')
                                 .setDescription(`**Ödül:** ${odul}\nYeterli katılımcı yoktu.`)
                                 .setFooter({ text: 'Kazanan yok' })
