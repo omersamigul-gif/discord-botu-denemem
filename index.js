@@ -822,7 +822,9 @@ if (command === 'sunucu') {
                 { name: '`!ticket-setup`', value: 'Yazılan kanalda destek bileti (ticket) sistemini kurar (**Yönetici**).', inline: true },
                 { name: '`!log #[kanal]`', value: 'Log kanalını ayarlar (**Yönetici**).', inline: true },
                 { name: '`!prefix`', value: 'Prefixi değiştirir (**Yönetici**).', inline: true },
-                { name: '`!gelen-giden`', value: 'Gelen-giden mesajlarını açar/kapatır (**Yönetici**).', inline: true }
+                { name: '`!gelen-giden`', value: 'Gelen-giden mesajlarını açar/kapatır (**Yönetici**).', inline: true },
+                { name: '`!ticket-rol/!ticket-role [@rol]`', value: 'Ticket kanallarında yetkili rolünü ayarlar (**Yönetici**).', inline: true },
+                { name: '`!ticket-kategori/!ticket-category #[kanal]`', value: 'Ticket kanalları için kategori ayarlar (**Yönetici**).', inline: true },
             )
             .setTimestamp()
             .setFooter({ text: `Komut İsteyen: ${message.author.tag}` });
@@ -1127,12 +1129,37 @@ else if (command === 'gelen-giden' || command === 'welcome-channel') {
 }
 
     // 23. KOMUT: !sunucu-sayisi
-    if (message.content === '!sunucu-sayisi' || message.content === '!server-count') {
-    const sunucular = message.client.guilds.cache.map(g => `isim: ${g.name} | id: ${g.id}`).join('\n');
-    const toplam = message.client.guilds.cache.size;
+    else if (command === 'sunucu-sayisi' || command === 'server-count') {
+        const sunucular = client.guilds.cache.map(g => `İsim: ${g.name} || Id: ${g.id}`).join('\n');
+        const toplam = client.guilds.cache.size;
+        return message.channel.send(`**Toplam ${toplam} sunucudayım!**\n\n${sunucular}`);
+    }
+    // ticket:
+    // --- TICKET AYARLARI VE KOMUTLARI ---
+    let ayarlar = {};
+    try {
+        ayarlar = JSON.parse(fs.readFileSync("./ayarlar.json", "utf8"));
+    } catch (e) { ayarlar = {}; }
 
-    message.channel.send(`**toplam ${toplam} sunucudayım!**\n\n${sunucular}`);
-}
+    // 24. KOMUT: !ticket-rol
+    if (command === 'ticket-rol') {
+        const rol = message.mentions.roles.first();
+        if (!rol) return message.reply('Bir rol etiketlemelisin!');
+        
+        ayarlar.ticketRolID = rol.id;
+        fs.writeFileSync("./ayarlar.json", JSON.stringify(ayarlar, null, 2));
+        return message.reply(`yetkili rolü başarıyla ayarlandı: **${rol.name}** ✅`);
+    }
+
+    // 25. KOMUT: !ticket-kategori
+    if (command === 'ticket-kategori' || command === 'ticket-category') {
+        const kategoriID = args[0];
+        if (!kategoriID) return message.reply('Kategori ID\'sini girmelisin!');
+        
+        ayarlar.ticketKategoriID = kategoriID;
+        fs.writeFileSync("./ayarlar.json", JSON.stringify(ayarlar, null, 2));
+        return message.reply(`ticket kategorisi kaydedildi! ✅`);
+    }
 });// <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
 // YENİ EVENT: Sunucuya üye katıldığında
@@ -1219,32 +1246,40 @@ client.on('interactionCreate', async interaction => {
 const ticketChannelName = `ticket-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}`;
 
 // 2. Kanalı Oluştur
+// önce ayarları dosyadan çekelim (butonun içinde en başa koyabilirsin)
+let ayarlar = {};
+try {
+    ayarlar = JSON.parse(fs.readFileSync("./ayarlar.json", "utf8"));
+} catch (e) { ayarlar = {}; }
+
+const rolID = ayarlar.ticketRolID;
+const katID = ayarlar.ticketKategoriID;
+
+// ... (diğer aktif ticket kontrollerin burada kalabilir)
+
 const channel = await interaction.guild.channels.create({
     name: ticketChannelName,
     type: ChannelType.GuildText,
-    parent: null, // Kategori belirtilmedi, sunucunun en üstüne oluşturulur
+    parent: katID || null, // !ticket-kategori ile ayarladığın id buraya geliyor!
     topic: `Ticket ID: ${interaction.user.id}`, 
     permissionOverwrites: [
         {
-            // @everyone: Kanali GÖRMESİN
-            id: interaction.guild.id,
+            id: interaction.guild.id, // @everyone görmesin
             deny: [PermissionFlagsBits.ViewChannel],
         },
         {
-            // Ticket Açan Kullanıcı: Kanali GÖRSÜN ve Mesaj GÖNDERSİN
-            id: interaction.user.id,
+            id: interaction.user.id, // açan kişi görsün
             allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
         },
         {
-            // Botun kendisi: Kanala erişebilmeli ve mesaj gönderebilmeli
-            id: client.user.id,
+            id: client.user.id, // bot görsün
             allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels],
         },
-        // İsteğe bağlı: Belirli bir moderatör rolüne de izin ver
-        // {
-        //     id: 'MODERATOR_ROL_ID', 
-        //     allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-        // },
+        // İŞTE BURASI: !ticket-rol ile ayarladığın yetkililere izin veriyoruz
+        ...(rolID ? [{
+            id: rolID,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+        }] : []),
     ],
 });
 
@@ -1274,23 +1309,33 @@ const channel = await interaction.guild.channels.create({
     
     // Ticket Kapatma Düğmesine Basıldığında
     else if (interaction.customId === 'close_ticket') {
-        // Sadece kanalın içindeki Kapat düğmesinden gelmelidir.
         if (!interaction.channel.name.startsWith('ticket-')) {
             return interaction.reply({ content: 'Bu bir ticket kanalı değil.', ephemeral: true });
         }
 
-        // Kullanıcıya cevap ver
         await interaction.deferReply();
 
-        // Ticket kanalını 5 saniye sonra sil
-        await interaction.channel.send('Ticket 5 saniye içinde kapatılacak ve silinecektir.');
-        
-        // 5 saniye bekle
-        setTimeout(() => {
-            interaction.channel.delete();
-        }, 5000); 
+        // --- LOGLAMA KISMI ---
+        const logEmbed = new EmbedBuilder()
+            .setColor(0x371d5d) 
+            .setTitle('🎫 TİCKET KAPATILDI')
+            .addFields(
+                { name: 'Kapatan Yetkili', value: `${interaction.user.tag}`, inline: true },
+                { name: 'Kanal Adı', value: `${interaction.channel.name}`, inline: true },
+                { name: 'Tarih', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: false }
+            )
+            .setTimestamp()
+            .setFooter({ text: 'Ticket Log Sistemi' });
 
-        await interaction.deleteReply();
+        // Senin mevcut sendLog fonksiyonunu kullanıyoruz
+        await sendLog(logEmbed);
+
+        // Kullanıcıya bildirim ver ve kanalı sil
+        await interaction.channel.send('Ticket başarıyla kapatıldı. Kanal 5 saniye içinde siliniyor... 🚀');
+        
+        setTimeout(() => {
+            interaction.channel.delete().catch(e => console.error("Kanal silinirken hata:", e));
+        }, 5000); 
     }
 });
 
