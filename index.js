@@ -127,7 +127,7 @@ client.once('clientReady', () => {
     console.log('-------------------------------');
     client.user.setPresence({
     activities: [
-      { name: '!h | v3.1', type: 0 } // Oynuyor
+      { name: '!h | v3.2', type: 0 } // Oynuyor
     ],
     status: 'online'
   });
