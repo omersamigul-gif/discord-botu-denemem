@@ -133,7 +133,8 @@ client.once('clientReady', () => {
   });
 });
 
-
+// ticket sistemi için:
+const ticketSistemi = require('./ticket.js');
 // ILK KOMUTLAR VE ONLARIN ORTAK TANIMLARI (PREFİX)
 const prefix = '!';
 
@@ -1063,9 +1064,8 @@ else if (command === 'prefix') {
     // 2. LOG KAYDI OLUŞTURMA
     const logEmbed = new EmbedBuilder()
         .setColor(0x371d5d) // Turuncu renk (Uyarı/Ayarlar için)
-        .setTitle('⚙️ SUNUCU AYARI DEĞİŞTİ')
+        .setTitle('⚙️ PREFİX GÜNCELLENDİ')
         .addFields(
-            { name: 'Eylem', value: 'Prefix Güncelleme', inline: false },
             { name: 'Eski Prefix', value: `\`${oldPrefix}\``, inline: true },
             { name: 'Yeni Prefix', value: `\`${newPrefix}\``, inline: true },
             { name: 'Yetkili', value: `${message.author.tag} (${message.author.id})`, inline: false }
@@ -1124,6 +1124,14 @@ else if (command === 'gelen-giden' || command === 'welcome-channel') {
         
     message.channel.send({ embeds: [welcomeEmbed] });
     message.delete().catch(() => {});
+}
+
+    // 23. KOMUT: !sunucu-sayisi
+    if (message.content === '!sunucu-sayisi' || message.content === '!server-count') {
+    const sunucular = message.client.guilds.cache.map(g => `isim: ${g.name} | id: ${g.id}`).join('\n');
+    const toplam = message.client.guilds.cache.size;
+
+    message.channel.send(`**toplam ${toplam} sunucudayım!**\n\n${sunucular}`);
 }
 });// <-- BU PARANTEZ, client.on('messageCreate', ...) olayını kapatır.
 
