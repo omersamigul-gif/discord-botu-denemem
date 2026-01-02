@@ -133,8 +133,6 @@ client.once('clientReady', () => {
   });
 });
 
-// ticket sistemi için:
-const ticketSistemi = require('./ticket.js');
 // ILK KOMUTLAR VE ONLARIN ORTAK TANIMLARI (PREFİX)
 const prefix = '!';
 
