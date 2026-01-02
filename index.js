@@ -1140,7 +1140,7 @@ else if (command === 'gelen-giden' || command === 'welcome-channel') {
     } catch (e) { ayarlar = {}; }
 
     // 24. KOMUT: !ticket-rol
-    if (command === 'ticket-rol') {
+    if (command === 'ticket-rol' || command === 'ticket-role') {
         const rol = message.mentions.roles.first();
         if (!rol) return message.reply('Bir rol etiketlemelisin!');
         
