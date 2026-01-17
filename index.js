@@ -1311,10 +1311,15 @@ const channel = await interaction.guild.channels.create({
             return interaction.reply({ content: 'Bu bir ticket kanalı değil.', ephemeral: true });
         }
 
-        await interaction.deferReply();
+        // 1. Önce kullanıcıya cevap verelim ki bot "düşünüyor..." diye kalmasın
+        await interaction.reply({ content: 'Ticket kapatılıyor...' });
 
-        // --- LOGLAMA KISMI (Düzeltilmiş) ---
-        const logData = JSON.parse(fs.readFileSync('./log.json', 'utf8'));
+        // 2. Log kanalı işlemlerini yapalım
+        let logData = {};
+        try {
+            logData = JSON.parse(fs.readFileSync('./log.json', 'utf8'));
+        } catch (e) { logData = {}; }
+
         const logChannelId = logData[interaction.guild.id];
 
         if (logChannelId) {
@@ -1328,13 +1333,22 @@ const channel = await interaction.guild.channels.create({
                         { name: 'Kanal Adı', value: `${interaction.channel.name}`, inline: true },
                         { name: 'Tarih', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: false }
                     )
-                    .setTimestamp()
-                    .setFooter({ text: 'Ticket Log Sistemi' });
+                    .setTimestamp();
 
-                await logChannel.send({ embeds: [logEmbed] }).catch(e => console.log("Log gönderilemedi: ", e));
+                // Logu gönder, gönderme bitince (then) veya hata verince (catch) devam et
+                await logChannel.send({ embeds: [logEmbed] }).catch(e => console.log("Log hatası:", e));
             }
         }
-    }
+
+        // 3. Kanalı silme işlemini logdan bağımsız olarak başlat (5 saniye bekletelim)
+        setTimeout(async () => {
+            try {
+                await interaction.channel.delete();
+            } catch (err) {
+                console.error("Kanal silinirken bi' aksilik çıktı:", err);
+            }
+        }, 5000);
+    }    
 });
 
 // Botu Discord'a bağlamak için tokeni kullanır
