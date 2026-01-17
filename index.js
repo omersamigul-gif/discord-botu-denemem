@@ -1313,27 +1313,27 @@ const channel = await interaction.guild.channels.create({
 
         await interaction.deferReply();
 
-        // --- LOGLAMA KISMI ---
-        const logEmbed = new EmbedBuilder()
-            .setColor(0x371d5d) 
-            .setTitle('🎫 TİCKET KAPATILDI')
-            .addFields(
-                { name: 'Kapatan Yetkili', value: `${interaction.user.tag}`, inline: true },
-                { name: 'Kanal Adı', value: `${interaction.channel.name}`, inline: true },
-                { name: 'Tarih', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: false }
-            )
-            .setTimestamp()
-            .setFooter({ text: 'Ticket Log Sistemi' });
+        // --- LOGLAMA KISMI (Düzeltilmiş) ---
+        const logData = JSON.parse(fs.readFileSync('./log.json', 'utf8'));
+        const logChannelId = logData[interaction.guild.id];
 
-        // Senin mevcut sendLog fonksiyonunu kullanıyoruz
-        await sendLog(logEmbed);
+        if (logChannelId) {
+            const logChannel = interaction.guild.channels.cache.get(logChannelId);
+            if (logChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setColor(0x371d5d)
+                    .setTitle('🎫 TİCKET KAPATILDI')
+                    .addFields(
+                        { name: 'Kapatan Yetkili', value: `${interaction.user.tag}`, inline: true },
+                        { name: 'Kanal Adı', value: `${interaction.channel.name}`, inline: true },
+                        { name: 'Tarih', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: false }
+                    )
+                    .setTimestamp()
+                    .setFooter({ text: 'Ticket Log Sistemi' });
 
-        // Kullanıcıya bildirim ver ve kanalı sil
-        await interaction.channel.send('Ticket başarıyla kapatıldı. Kanal 5 saniye içinde siliniyor... 🚀');
-        
-        setTimeout(() => {
-            interaction.channel.delete().catch(e => console.error("Kanal silinirken hata:", e));
-        }, 5000); 
+                await logChannel.send({ embeds: [logEmbed] }).catch(e => console.log("Log gönderilemedi: ", e));
+            }
+        }
     }
 });
 
