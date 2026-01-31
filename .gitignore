@@ -3,5 +3,3 @@ node_modules/
 
 # Ortam değişkeni dosyasını görmezden gel
 .env
-# Log dosyalarını görmezden gel
-logs/
